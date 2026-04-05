@@ -692,9 +692,8 @@
     </div>
 
     <!-- Intro Video (Scrubbing puro atado al scroll) -->
-    <video id="intro-scrub-video" muted playsinline class="bg-video" preload="auto" style="transform-origin: center center; width: 100vw; height: 100vh; object-fit: cover;">
-        <source src="assets/bg-scrub-mobile.mp4" type="video/mp4" media="(max-width: 768px)">
-        <source src="assets/bg-scrub-desktop.mp4" type="video/mp4">
+    <!-- Background Video para Scrubbing (Blob Fetch via JS) -->
+    <video id="intro-scrub-video" muted playsinline class="bg-video" style="transform-origin: center center; width: 100vw; height: 100vh; object-fit: cover;">
     </video>
 
     <!-- Deep sea darkening overlay removed per user request -->
@@ -921,6 +920,37 @@
         let currentScroll = 0;
         let hasPlayedTvEffect = false;
         
+        // --- BLOB FETCH LOGIC FOR FLAWLESS SCRUBBING ---
+        // Fetching the entire video as a Blob prevents the browser from spamming
+        // hundreds of canceled HTTP 206 Range requests when rapidly scrubbing via currentTime.
+        let isScrubbingReady = false;
+        const loadVideoBlob = async () => {
+            const videoSrc = window.innerWidth <= 768 ? 'assets/bg-scrub-mobile.mp4' : 'assets/bg-scrub-desktop.mp4';
+            try {
+                const response = await fetch(videoSrc);
+                if (!response.ok) throw new Error("Network response was not ok");
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                
+                video.src = blobUrl;
+                
+                video.addEventListener('loadedmetadata', () => {
+                    video.classList.add('is-visible');
+                    isScrubbingReady = true;
+                });
+                video.load();
+            } catch (err) {
+                console.error("Error fetching video blob, fallback to standard src", err);
+                video.src = videoSrc;
+                video.load();
+                video.addEventListener('loadedmetadata', () => {
+                    video.classList.add('is-visible');
+                    isScrubbingReady = true;
+                });
+            }
+        };
+        loadVideoBlob();
+        
         // Update body height for virtual scroll
         const setBodyHeight = () => {
             document.body.style.height = `${mainContent.scrollHeight}px`;
@@ -936,13 +966,6 @@
 
         // Ensure video is visible once metadata is loaded
         const loader = document.getElementById('loader');
-        
-        video.addEventListener('loadedmetadata', () => {
-            video.classList.add('is-visible');
-        });
-        if (video.readyState >= 1) {
-            video.classList.add('is-visible');
-        }
 
         // Loader Dismissal Logic
         // Dismiss loader immediately after background and first offer video load
