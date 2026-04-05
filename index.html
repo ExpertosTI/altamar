@@ -52,11 +52,11 @@
         }
 
         @keyframes crt-flash {
-            0% { opacity: 0; transform: scaleY(0); background: #fff; }
+            0% { opacity: 0; transform: scaleY(0); background: #fff; visibility: visible; }
             10% { opacity: 1; transform: scaleY(0.01); background: #fff; }
             20% { opacity: 1; transform: scaleY(1); background: #fff; }
             40% { opacity: 0.8; transform: scaleY(1); background: rgba(255,255,255,0.8); }
-            100% { opacity: 0; transform: scaleY(1); background: transparent; }
+            100% { opacity: 0; transform: scaleY(1); background: transparent; visibility: hidden; }
         }
 
         /* Modern Loading Screen */
@@ -124,6 +124,8 @@
             opacity: 0;
             transition: opacity 0.5s ease;
             pointer-events: none;
+            will-change: transform;
+            transform: translateZ(0);
         }
 
         .bg-video.is-visible {
@@ -139,8 +141,10 @@
             height: 100vh;
             z-index: -1;
             pointer-events: none;
-            mix-blend-mode: overlay; /* Soft blend with the water */
-            opacity: 0.6; /* Subtler overall presence */
+            opacity: 0.4; /* Reducido por la eliminación de mix-blend-mode para no sobrecargar el video */
+            /* mix-blend-mode eliminado para evitar bloqueos en la decodificación por GPU del video */
+            will-change: transform;
+            transform: translateZ(0);
         }
 
         /* Progress bar */
@@ -684,7 +688,7 @@
     <!-- Intro Video (Scrubbing puro atado al scroll) -->
     <video id="intro-scrub-video" muted playsinline class="bg-video" preload="auto" style="transform-origin: center center; width: 100vw; height: 100vh; object-fit: cover;">
         <source src="assets/bg-scrub-mobile.mp4" type="video/mp4" media="(max-width: 768px)">
-        <source src="assets/bg-scrub-optimized.mp4" type="video/mp4">
+        <source src="assets/bg-scrub-desktop.mp4" type="video/mp4">
     </video>
 
     <!-- Deep sea darkening overlay removed per user request -->
@@ -995,7 +999,7 @@
         let ripples = [];
         
         // Drastically more particles since they are distributed in 3D space
-        const massCount = window.innerWidth < 600 ? 300 : 800;
+        const massCount = window.innerWidth < 600 ? 600 : 1800; // MUY AGRESIVO: Doble de partículas
 
         let pointerX = window.innerWidth / 2;
         let pointerY = window.innerHeight / 2;
@@ -1094,10 +1098,10 @@
                 const scrollDelta = targetScroll - currentScroll;
                 
                 // 1. DIVE PHYSICS (Moving forward in Z space based on scroll)
-                this.z -= (scrollDelta * 1.2);
+                this.z -= (scrollDelta * 5.5); // MUY AGRESIVO: Se abalanzan hacia la pantalla
                 
                 // Natural forward drift (movimiento continuo hacia la cámara)
-                this.z -= 2.5;
+                this.z -= 0.5; // Más lento en pausa para que el contraste sea mayor
 
                 // Wrap around Z axis
                 if (this.z < 1) {
@@ -1158,7 +1162,7 @@
                 this.y += this.vy + Math.sin(this.wobblePhase) * 1.0;
             }
 
-            draw() {
+            draw(opacityMultiplier = 1) {
                 if (this.z < 1) return;
 
                 // 3D Projection
@@ -1183,11 +1187,16 @@
                 
                 // Stretch based on scroll speed (Z-speed) AND proximity to camera
                 const scrollDelta = Math.abs(targetScroll - currentScroll);
-                const zSpeed = (scrollDelta * 0.8) + 0.5; // Match new slower speed
+                const zSpeed = (scrollDelta * 2.5) + 0.5; // AGRESIVO: Reacciona con fuerza al scroll
                 
                 // Only stretch significantly if moving fast AND close to camera. Capped to prevent laser effect
-                const rawStretch = Math.max(1, (zSpeed / 15) * (1000 / Math.max(this.z, 100)));
-                const stretch = Math.min(rawStretch, 2.2); // Hard cap stretch to 2.2x to keep it looking like particles, not lasers
+                const rawStretch = Math.max(1, (zSpeed / 8) * (1000 / Math.max(this.z, 100)));
+                const stretch = Math.min(rawStretch, 8.0); // EFECTO WARP SPEED: Se estiran como estrellas de Star Wars
+
+                // Además del stretch, agregamos una aberración lateral basada en la velocidad de scroll
+                const speedWobble = Math.min(scrollDelta * 0.5, 10);
+                this.x += (Math.random() - 0.5) * speedWobble;
+                this.y += (Math.random() - 0.5) * speedWobble;
 
                 ctx.save();
                 ctx.translate(screenX, screenY);
@@ -1199,7 +1208,7 @@
                 
                 // Bubbles fade in the distance and get brighter/larger up close. 
                 // Add a slight cyan tint to look like marine snow
-                const opacity = Math.min(0.6, 0.1 + (scale * 0.5));
+                const opacity = Math.min(0.6, 0.1 + (scale * 0.5)) * opacityMultiplier;
                 ctx.fillStyle = `rgba(200, 230, 255, ${opacity})`;
                 ctx.fill();
 
@@ -1256,7 +1265,7 @@
                     // Efecto dinámico de inmersión (parallax/scale) basado en el scroll total
                     const diveScale = Math.min(1.3, 1 + (progress * 0.3));
                     const diveY = currentScroll * 0.15; // Ligero parallax hacia abajo
-                    video.style.transform = `translateY(${diveY}px) scale(${diveScale})`;
+                    video.style.transform = `translateY(${diveY}px) scale(${diveScale}) translateZ(0)`;
                 }
             }
 
@@ -1368,6 +1377,9 @@
                 if (dist < 0.8 && !hasPlayedTvEffect && section.id === 'ofertas') {
                     hasPlayedTvEffect = true;
                     tvOverlay.classList.add('play-effect');
+                    setTimeout(() => {
+                        tvOverlay.style.display = 'none';
+                    }, 850);
                 }
 
                 if (dist > 0) {
@@ -1399,9 +1411,30 @@
             // Draw Canvas 3D Bubbles
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            bubbles.forEach(b => {
+            // Calculate scroll intensity for dynamic bubble quantity
+            const scrollDeltaRaw = Math.abs(targetScroll - currentScroll);
+            if (typeof window.smoothedScrollDelta === 'undefined') window.smoothedScrollDelta = 0;
+            
+            // Smooth out the scroll speed spikes
+            window.smoothedScrollDelta += (scrollDeltaRaw - window.smoothedScrollDelta) * 0.15; // Reacciona mucho más rápido
+            
+            // Base 5% bubbles when paused, up to 100% when scrolling fast
+            const activeRatio = 0.05 + Math.min(window.smoothedScrollDelta / 12, 1) * 0.95; // Llega al 100% con muy poco scroll
+            const activeBubblesCount = Math.floor(bubbles.length * activeRatio);
+
+            bubbles.forEach((b, index) => {
                 b.update();
-                b.draw();
+                
+                // Smoothly fade bubbles in and out based on their active status
+                if (index < activeBubblesCount) {
+                    b.opacityMultiplier = Math.min((b.opacityMultiplier || 0) + 0.15, 1); // Aparecen explosivamente
+                } else {
+                    b.opacityMultiplier = Math.max((b.opacityMultiplier || 0) - 0.04, 0); // Desaparecen relativamente rápido
+                }
+                
+                if (b.opacityMultiplier > 0.01) {
+                    b.draw(b.opacityMultiplier);
+                }
             });
 
             // Update and draw ripples, remove dead ones
