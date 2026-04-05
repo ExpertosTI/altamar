@@ -18,6 +18,9 @@ services:
         - "traefik.enable=true"
         - "traefik.http.routers.pescaderia-altamar-http.rule=Host(`pescaderiaaltamar.com`) || Host(`www.pescaderiaaltamar.com`)"
         - "traefik.http.routers.pescaderia-altamar-http.entrypoints=web"
+        - "traefik.http.routers.pescaderia-altamar-https.rule=Host(`pescaderiaaltamar.com`) || Host(`www.pescaderiaaltamar.com`)"
+        - "traefik.http.routers.pescaderia-altamar-https.entrypoints=websecure"
+        - "traefik.http.routers.pescaderia-altamar-https.tls=true"
         - "traefik.http.services.pescaderia-altamar-svc.loadbalancer.server.port=80"
         - "traefik.docker.network=RenaceNet"
 
