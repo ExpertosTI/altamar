@@ -950,29 +950,47 @@
         const hideLoader = () => {
             if (loader && !loader.classList.contains('is-hidden')) {
                 loader.classList.add('is-hidden');
+                
+                // Disparar un evento global cuando el loader se oculta (video de fondo listo)
+                window.isBgLoadedForLazy = true;
+                window.dispatchEvent(new Event('backgroundVideoReady'));
             }
         };
 
-        // Fallback timeout in case videos fail to load or take too long (5 seconds max)
-        const loaderTimeout = setTimeout(hideLoader, 5000);
+        // Aumentamos el timeout a 8s para dar más margen en conexiones muy lentas
+        const loaderTimeout = setTimeout(hideLoader, 8000);
 
         const checkVideosLoaded = () => {
-            const bgLoaded = video.readyState >= 3; // HAVE_FUTURE_DATA
+            // Requerimos HAVE_ENOUGH_DATA (4) para asegurar que el video principal puede reproducirse suavemente
+            const bgLoaded = video.readyState >= 4; 
             
             if (bgLoaded) {
                 clearTimeout(loaderTimeout);
                 hideLoader();
-                window.isBgLoadedForLazy = true; // Flag to allow lazy loading
             }
         };
 
-        video.addEventListener('canplay', checkVideosLoaded);
+        // Escuchar 'canplaythrough' que garantiza que hay suficiente buffer
+        video.addEventListener('canplaythrough', checkVideosLoaded);
         
         // Check immediately in case they are already loaded
         checkVideosLoaded();
         
         // If loader times out, allow lazy videos anyway
-        setTimeout(() => { window.isBgLoadedForLazy = true; }, 5000);
+        setTimeout(() => { 
+            window.isBgLoadedForLazy = true; 
+            window.dispatchEvent(new Event('backgroundVideoReady'));
+        }, 8000);
+
+        // Pre-carga controlada de los posters SÓLO cuando el video de fondo ya está listo
+        window.addEventListener('backgroundVideoReady', () => {
+            const vids = document.querySelectorAll('.lazy-video');
+            vids.forEach(vid => {
+                if (!vid.getAttribute('poster') && vid.dataset.poster) {
+                    vid.setAttribute('poster', vid.dataset.poster);
+                }
+            });
+        });
 
         // -----------------------
         // Canvas 3D Bubble / Swim Logic
