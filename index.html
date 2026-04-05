@@ -1143,8 +1143,12 @@
                     this.y = -window.innerHeight * 2;
                 }
 
-                // Flotabilidad natural (las burbujas suben)
-                this.vy -= 0.05; 
+                // Profundidad actual de la página (0 a 1) para dar efecto de "escape de gas en el fondo"
+                const scrollMax = document.documentElement.scrollHeight - window.innerHeight;
+                const depthFactor = scrollMax > 0 ? Math.max(0, Math.min(currentScroll / scrollMax, 1)) : 0;
+
+                // Flotabilidad natural (las burbujas suben). Si estamos más profundo, suben con más fuerza.
+                this.vy -= (0.05 + depthFactor * 0.15); 
                 
                 // Fricción del agua
                 this.vx *= 0.96;
@@ -1442,8 +1446,13 @@
             // Smooth out the scroll speed spikes
             window.smoothedScrollDelta += (scrollDeltaRaw - window.smoothedScrollDelta) * 0.15; // Reacciona mucho más rápido
             
-            // Base 40% bubbles when paused, up to 100% when scrolling fast
-            const activeRatio = 0.40 + Math.min(window.smoothedScrollDelta / 12, 1) * 0.60; // 40% en pausa, llega rápido al 100%
+            // Más profundidad = más burbujas base (simula escapes de aire en el fondo)
+            const scrollMaxAnim = document.documentElement.scrollHeight - window.innerHeight;
+            const depthFactor = scrollMaxAnim > 0 ? Math.max(0, Math.min(currentScroll / scrollMaxAnim, 1)) : 0;
+            const baseRatio = 0.35 + (depthFactor * 0.45); // 35% arriba, 80% abajo (incluso en pausa)
+            
+            // Base bubbles when paused, up to 100% when scrolling fast
+            const activeRatio = baseRatio + Math.min(window.smoothedScrollDelta / 12, 1) * (1 - baseRatio); 
             const activeBubblesCount = Math.floor(bubbles.length * activeRatio);
 
             bubbles.forEach((b, index) => {
