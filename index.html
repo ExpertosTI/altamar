@@ -44,7 +44,7 @@
             z-index: 9998; /* Just below loader */
             pointer-events: none;
             opacity: 0;
-            mix-blend-mode: overlay;
+            /* Se eliminan mix-blend-mode y filters complejos porque rompen la renderización por GPU del video de fondo */
         }
 
         .tv-transition-overlay.play-effect {
@@ -52,13 +52,11 @@
         }
 
         @keyframes crt-flash {
-            0% { opacity: 0; transform: scaleY(0); background: #fff; filter: invert(0); }
-            5% { opacity: 1; transform: scaleY(0.01); background: #fff; filter: invert(0); }
-            10% { opacity: 1; transform: scaleY(0.01); background: #fff; filter: invert(1); }
-            20% { opacity: 1; transform: scaleY(1); background: transparent; box-shadow: inset 0 0 250px rgba(0,0,0,0.9); filter: contrast(2) saturate(1.5) hue-rotate(90deg); }
-            30% { opacity: 1; transform: scaleY(1); background: transparent; box-shadow: inset 0 0 100px rgba(0,0,0,0.7); filter: contrast(1.5) saturate(1.2) hue-rotate(-90deg); }
-            50% { opacity: 1; transform: scaleY(1); background: transparent; box-shadow: inset 0 0 50px rgba(0,0,0,0.5); filter: contrast(1.2) saturate(1.2); }
-            100% { opacity: 0; transform: scaleY(1); background: transparent; filter: none; }
+            0% { opacity: 0; transform: scaleY(0); background: #fff; }
+            10% { opacity: 1; transform: scaleY(0.01); background: #fff; }
+            20% { opacity: 1; transform: scaleY(1); background: #fff; }
+            40% { opacity: 0.8; transform: scaleY(1); background: rgba(255,255,255,0.8); }
+            100% { opacity: 0; transform: scaleY(1); background: transparent; }
         }
 
         /* Modern Loading Screen */
@@ -359,7 +357,7 @@
             padding: 20px;
             opacity: 0;
             transform-origin: center center;
-            will-change: transform, opacity, filter;
+            will-change: transform, opacity;
         }
 
         .glass-card {
@@ -709,7 +707,7 @@
         <div id="intro-pacer" style="height: 100vh; width: 100%; pointer-events: none;"></div>
 
         <!-- Ofertas Section (Próximamente API Odoo) -->
-        <section class="section" id="ofertas" style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; transition: opacity 0.1s, transform 0.1s, filter 0.1s; will-change: transform, opacity, filter;">
+        <section class="section" id="ofertas" style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; will-change: transform, opacity;">
             <!-- Removed glass-card background to see the video -->
             <div style="max-width: 1000px; width: 100%; text-align: center;">
                 <i data-lucide="tag" class="card-icon" style="margin-bottom: 10px; width: 40px; height: 40px; color: var(--accent-gold);"></i>
@@ -1304,17 +1302,14 @@
                     const sinkY = -sinkProgress * 40; 
                     const sinkScale = 1 - (sinkProgress * 0.9); // Shrink down to 10%
                     const sinkOpacity = 1 - sinkProgress;
-                    const sinkBlur = sinkProgress * 15; // Heavy blur
                     
                     subtitleContainer.style.transform = `translateY(${sinkY}px) scale(${sinkScale})`;
                     subtitleContainer.style.opacity = sinkOpacity;
-                    subtitleContainer.style.filter = `blur(${sinkBlur}px)`;
                     
                     if (cursor) cursor.style.opacity = sinkOpacity;
                 } else {
                     subtitleContainer.style.transform = `translateY(0px) scale(1)`;
                     subtitleContainer.style.opacity = 1;
-                    subtitleContainer.style.filter = `blur(0px)`;
                     
                     if (cursor) {
                         cursor.style.opacity = 1;
@@ -1331,17 +1326,13 @@
             const logoImg = document.querySelector('.hero-logo');
             let scaleAmount = 1;
             let logoOpacity = 1;
-            let blurAmount = 0;
-            let brightness = 1;
 
             if (logoProgress < 0.15) {
                 // Phase 1: Emerging from the deep (0% to 15%)
-                // Starts slightly smaller, blurry and dark, comes to full focus
+                // Starts slightly smaller, comes to full focus
                 const phaseProgress = logoProgress / 0.15; // 0 to 1
                 scaleAmount = 0.8 + (0.2 * phaseProgress);
                 logoOpacity = 1; // Container stays fully visible
-                blurAmount = 5 * (1 - phaseProgress); // 5px to 0px
-                brightness = 0.6 + (0.4 * phaseProgress); // Dark to normal
                 
                 if (logoImg) logoImg.style.opacity = 0.6 + (0.4 * phaseProgress); // Image fades in
             } else {
@@ -1351,16 +1342,13 @@
                 scaleAmount = 1 + Math.pow(phaseProgress, 3) * 6; 
                 // Fade out as it gets too close (starts fading after halfway)
                 logoOpacity = phaseProgress > 0.5 ? 1 - ((phaseProgress - 0.5) / 0.5) : 1;
-                // Blur as it gets too close to the lens (Softened)
-                blurAmount = Math.pow(phaseProgress, 2) * 6; 
-                // Darken as it passes the camera
-                brightness = 1 - (phaseProgress * 0.4);
-
+                
                 if (logoImg) logoImg.style.opacity = 1;
             }
 
             if (logoImg) {
-                logoImg.style.filter = `drop-shadow(0 10px 30px rgba(0,0,0,0.8)) blur(${blurAmount}px) brightness(${brightness})`;
+                // Drop shadow without blur/brightness to keep performance fast
+                logoImg.style.filter = `drop-shadow(0 10px 30px rgba(0,0,0,0.8))`;
             }
 
             hero.style.transform = `translate(-50%, -50%) scale(${scaleAmount})`;
@@ -1393,22 +1381,17 @@
                     // Empieza en un tamaño minúsculo (0.2) y crece hasta 1
                     let scale = 0.2 + (0.8 * (1 - dist));
                     
-                    // El blur empieza fuerte y se aclara
-                    let blur = dist * 25; 
-                    
                     // Fuerza a que el contenido nazca exactamente en el medio de la pantalla
                     let translateY = (vh / 2) - center;
                     
                     section.style.opacity = Math.max(0, opacity);
                     section.style.transform = `translateY(${translateY}px) scale(${Math.max(0.2, scale)})`;
-                    section.style.filter = `blur(${Math.max(0, blur)}px)`;
                     section.style.pointerEvents = opacity > 0.5 ? 'auto' : 'none';
                 } else {
                     // Cuando ya llegó al centro o está por encima, se queda estática y 100% clara,
                     // permitiendo que fluya naturalmente con el scroll del usuario hacia arriba.
                     section.style.opacity = '1';
                     section.style.transform = `translateY(0px) scale(1)`;
-                    section.style.filter = `blur(0px)`;
                     section.style.pointerEvents = 'auto';
                 }
             });
