@@ -32,6 +32,10 @@ echo "🌐 Verificando red RenaceNet..."
 docker network ls | grep RenaceNet > /dev/null || \
     docker network create --driver overlay RenaceNet
 
+# 4.5. Ensure required directories exist for Docker Swarm bind mounts
+echo "📁 Creando directorios necesarios para los volúmenes..."
+mkdir -p nginx/logs nginx/admin
+
 # 5. Deploy stack
 echo "🚢 Desplegando stack en Docker Swarm..."
 docker stack deploy -c docker-compose.yml $STACK_NAME
