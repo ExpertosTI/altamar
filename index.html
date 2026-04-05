@@ -908,18 +908,33 @@
         let currentScroll = 0;
         let hasPlayedTvEffect = false;
         
-        // Asignación directa del video para evitar bloqueos de red con Blob Fetch
+        // Asignación directa del video para evitar bloqueos iniciales
         let isScrubbingReady = false;
+        let isVideoLocal = false; // Bandera para el Blob local
         const videoSrc = window.innerWidth <= 768 ? 'assets/bg-scrub-mobile.mp4' : 'assets/bg-scrub-desktop.mp4';
         
-        // Se asegura que tenga el source correcto
+        // 1. Se asegura que tenga el source correcto para carga rápida
         video.src = videoSrc;
-        video.preload = 'auto'; // Permitimos al navegador hacer partial requests (206) pero que lo maneje nativamente
+        video.preload = 'auto';
         
         video.addEventListener('loadedmetadata', () => {
             video.classList.add('is-visible');
             isScrubbingReady = true;
         });
+        
+        // 2. Fetch silencioso en segundo plano para convertir a Blob.
+        // Esto elimina por completo el spam de cientos de peticiones HTTP 206 al hacer scroll (Scrubbing).
+        fetch(videoSrc)
+            .then(res => res.blob())
+            .then(blob => {
+                const blobUrl = URL.createObjectURL(blob);
+                const currentT = video.currentTime;
+                video.src = blobUrl;
+                video.currentTime = currentT;
+                isVideoLocal = true;
+                console.log("Background video is now a local Blob. Network spam prevented.");
+            })
+            .catch(e => console.error("Error fetching blob video:", e));
         
         // Evitamos llamar a video.load() a menos que sea estrictamente necesario para no duplicar requests
         
@@ -1274,8 +1289,10 @@
                         const maxTime = video.duration - 1.5; 
                         const newTime = progress * maxTime;
                         
-                        // Evitar spam de peticiones 206 limitando la actualización del tiempo a diferencias > 0.08s (aprox 12fps) para dispositivos móviles/safari
-                        if (Math.abs(video.currentTime - newTime) > 0.08) {
+                        // Si ya está local (Blob) podemos actualizar casi sin límite (30fps/60fps). 
+                        // Si está en la red (Safari/Mobile bloqueando), somos estrictos (12fps) para evitar el spam rojo.
+                        const updateThreshold = isVideoLocal ? 0.015 : 0.08;
+                        if (Math.abs(video.currentTime - newTime) > updateThreshold) {
                             video.currentTime = newTime;
                         }
                     }
