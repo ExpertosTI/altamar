@@ -1088,16 +1088,18 @@
                 // Z goes from 0 (camera) to 2000 (far away)
                 this.z = randomZ ? Math.random() * 2000 : 2000;
                 
-                // Variedad de tamaños de burbujas/partículas
-                this.baseSize = Math.random() * 6 + 1.5; 
+                // Variedad extrema de tamaños: 
+                // Usamos Math.pow() para generar MUCHAS burbujas diminutas y POCAS burbujas gigantes.
+                // Esto da un efecto de profundidad y realismo abismal.
+                this.baseSize = Math.pow(Math.random(), 4) * 25 + 0.8; 
                 
-                // Velocidades más dinámicas
-                this.vx = (Math.random() - 0.5) * 4;
-                this.vy = (Math.random() - 0.5) * 4; 
+                // Velocidades muy suaves para el estado de pausa
+                this.vx = (Math.random() - 0.5) * 1.5;
+                this.vy = (Math.random() - 0.5) * 1.5; 
                 
-                // For organic wandering (wobble)
+                // Movimiento orgánico (wobble) muy lento para que la pausa se sienta como agua calmada
                 this.wobblePhase = Math.random() * Math.PI * 2;
-                this.wobbleSpeed = Math.random() * 0.1 + 0.03;
+                this.wobbleSpeed = Math.random() * 0.03 + 0.005;
             }
 
             update() {
@@ -1107,7 +1109,7 @@
                 this.z -= (scrollDelta * 5.5); // MUY AGRESIVO: Se abalanzan hacia la pantalla
                 
                 // Natural forward drift (movimiento continuo hacia la cámara)
-                this.z -= 0.5; // Más lento en pausa para que el contraste sea mayor
+                this.z -= 0.1; // PAUSA PERFECTA: Movimiento microscópico hacia adelante cuando no hay scroll
 
                 // Wrap around Z axis
                 if (this.z < 1) {
@@ -1424,8 +1426,8 @@
             // Smooth out the scroll speed spikes
             window.smoothedScrollDelta += (scrollDeltaRaw - window.smoothedScrollDelta) * 0.15; // Reacciona mucho más rápido
             
-            // Base 5% bubbles when paused, up to 100% when scrolling fast
-            const activeRatio = 0.05 + Math.min(window.smoothedScrollDelta / 12, 1) * 0.95; // Llega al 100% con muy poco scroll
+            // Base 40% bubbles when paused, up to 100% when scrolling fast
+            const activeRatio = 0.40 + Math.min(window.smoothedScrollDelta / 12, 1) * 0.60; // 40% en pausa, llega rápido al 100%
             const activeBubblesCount = Math.floor(bubbles.length * activeRatio);
 
             bubbles.forEach((b, index) => {
