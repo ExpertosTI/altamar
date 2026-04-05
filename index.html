@@ -8,7 +8,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <!-- Security and Performance Meta Tags -->
     <meta name="theme-color" content="#000c18">
-    <link rel="preload" href="assets/bg-scrub.mp4" as="video" type="video/mp4">
+    <link rel="preload" href="assets/bg-scrub.mp4" as="fetch" type="video/mp4" crossorigin="anonymous">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,6 +31,54 @@
             color: var(--text-main);
             overflow-x: hidden;
             overscroll-behavior-y: none; /* Prevents bounce effect for better scrub feel */
+        }
+
+        /* Modern Loading Screen */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-color);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.8s ease, visibility 0.8s;
+        }
+
+        #loader.is-hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(245, 158, 11, 0.2);
+            border-top-color: var(--accent-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin { 
+            100% { transform: rotate(360deg); } 
+        }
+
+        .loader-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            color: var(--accent-gold);
+            letter-spacing: 2px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
         }
 
         .is-scrolling { height: 100%; }
@@ -587,6 +635,12 @@
 </head>
 <body>
 
+    <!-- Loading Screen -->
+    <div id="loader">
+        <div class="spinner"></div>
+        <div class="loader-text">Preparando tu experiencia...</div>
+    </div>
+
     <!-- Scroll Hint Overlay -->
     <div id="initial-scroll-prompt" class="entrance-overlay">
         <div class="entrance-hint">
@@ -596,7 +650,7 @@
     </div>
 
     <!-- Intro Video (scroll-scrubbed entirely by scroll) -->
-    <video id="intro-scrub-video" autoplay muted playsinline class="bg-video" preload="auto" style="transform-origin: center center;">
+    <video id="intro-scrub-video" autoplay muted loop playsinline class="bg-video" preload="auto" style="transform-origin: center center; width: 100vw; height: 100vh; object-fit: cover;">
         <source src="assets/bg-scrub.mp4" type="video/mp4">
     </video>
 
@@ -729,7 +783,7 @@
                         
                         <div class="cta-secondary">
                             <a href="https://www.instagram.com/pescaderia__altamar/" target="_blank" rel="noopener noreferrer" style="color: var(--text-main); transition: color 0.3s; display: flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 500; text-shadow: 0 2px 5px rgba(0,0,0,0.8);" onmouseover="this.style.color='var(--accent-gold)';" onmouseout="this.style.color='var(--text-main)';">
-                                <i data-lucide="instagram" style="width: 24px; height: 24px;"></i>
+                                <svg xmlns="http://www.svg.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-instagram" style="width: 24px; height: 24px;"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
                                 @pescaderia__altamar
                             </a>
                             <a href="tel:+1234567890" style="color: var(--text-main); transition: color 0.3s; display: flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 500; text-shadow: 0 2px 5px rgba(0,0,0,0.8);" onmouseover="this.style.color='var(--accent-gold)';" onmouseout="this.style.color='var(--text-main)';">
@@ -1359,6 +1413,7 @@
                     jsonrpc: "2.0",
                     method: "call",
                     params: {
+                        db: "altamar",
                         login: username,
                         password: password
                     }
