@@ -1030,21 +1030,22 @@
         // Drastically more particles since they are distributed in 3D space
         const massCount = window.innerWidth < 600 ? 600 : 1800; // MUY AGRESIVO: Doble de partículas
 
-        let pointerX = window.innerWidth / 2;
-        let pointerY = window.innerHeight / 2;
-        let isPointerActive = false;
+        let pointerX = -1000;
+        let pointerY = -1000;
+        let isPointerActive = false; // Lo usaremos para el click (touch) extra
+        let mouseSpeed = 0;
+        let lastMouseX = -1000;
+        let lastMouseY = -1000;
 
-        // Follow mouse/touch
+        // Actualizar mouse constantemente para efecto de gravedad/distorsión
+        window.addEventListener('pointermove', (e) => {
+            pointerX = e.clientX;
+            pointerY = e.clientY;
+        });
         window.addEventListener('pointerdown', (e) => {
             isPointerActive = true;
             pointerX = e.clientX;
             pointerY = e.clientY;
-        });
-        window.addEventListener('pointermove', (e) => {
-            if(isPointerActive) {
-                pointerX = e.clientX;
-                pointerY = e.clientY;
-            }
         });
         window.addEventListener('pointerup', () => {
             isPointerActive = false;
@@ -1128,120 +1129,116 @@
             update() {
                 const scrollDelta = targetScroll - currentScroll;
                 
-                // 1. DIVE PHYSICS (Moving forward in Z space based on scroll)
-                this.z -= (scrollDelta * 5.5); // MUY AGRESIVO: Se abalanzan hacia la pantalla
+                // Guardar posiciones anteriores para calcular el vector de movimiento real en pantalla
+                const fov = 800;
+                const oldScale = fov / (fov + this.z);
+                this.lastScreenX = (window.innerWidth / 2) + this.x * oldScale;
+                this.lastScreenY = (window.innerHeight / 2) + this.y * oldScale;
+
+                // 1. DIVE PHYSICS (Moving in Z and Y space based on scroll)
+                this.z -= (scrollDelta * 3.5); // Menos abalanzado en Z
                 
-                // Natural forward drift (movimiento continuo hacia la cámara)
-                this.z -= 0.1; // PAUSA PERFECTA: Movimiento microscópico hacia adelante cuando no hay scroll
+                // Al hacer scroll, las burbujas suben (simula que la cámara baja)
+                // Esto rompe el efecto de "túnel/Star Wars" y lo hace sentir como fluido real
+                this.y -= (scrollDelta * 2.5); 
+                
+                // Natural forward drift
+                this.z -= 0.1; 
 
                 // Wrap around Z axis
                 if (this.z < 1) {
                     this.reset();
                     this.z = 2000;
+                    this.y = (Math.random() * window.innerHeight * 2); // Nacer abajo
                 } else if (this.z > 2000) {
                     this.reset();
                     this.z = 1;
                 }
+                
+                // Wrap en Y (flujo continuo)
+                if (this.y < -window.innerHeight * 2) {
+                    this.y = window.innerHeight * 2;
+                } else if (this.y > window.innerHeight * 2) {
+                    this.y = -window.innerHeight * 2;
+                }
 
                 // Flotabilidad natural (las burbujas suben)
-                this.vy -= 0.03; 
+                this.vy -= 0.05; 
                 
                 // Fricción del agua
-                this.vx *= 0.97;
-                this.vy *= 0.97;
+                this.vx *= 0.96;
+                this.vy *= 0.96;
 
-                const fov = 800;
                 const scale = fov / (fov + this.z);
                 const screenX = (window.innerWidth / 2) + this.x * scale;
                 const screenY = (window.innerHeight / 2) + this.y * scale;
 
-                // Ripples shockwave
-                ripples.forEach(r => {
-                    const dx = screenX - r.x;
-                    const dy = screenY - r.y;
-                    const dist = Math.sqrt(dx*dx + dy*dy);
+                // Efecto de distorsión/gravedad intensa con el puntero (Hover o Touch)
+                const dxMouse = pointerX - screenX;
+                const dyMouse = pointerY - screenY;
+                const distMouse = Math.sqrt(dxMouse*dxMouse + dyMouse*dyMouse);
+                
+                if (pointerX !== -1000 && distMouse < 250) {
+                    // Fuerza exponencial basada en la cercanía
+                    const force = Math.pow((250 - distMouse) / 250, 2);
                     
-                    const diff = Math.abs(dist - r.radius);
-                    if (diff < 80) {
-                        const force = (80 - diff) / 80;
-                        this.vx += (dx / dist) * force * 5 * (1/scale);
-                        this.vy += (dy / dist) * force * 5 * (1/scale);
-                    }
-                });
-
-                // Flock towards mouse (Cardumen effect - Softened)
-                if (isPointerActive) {
-                    const dx = pointerX - screenX;
-                    const dy = pointerY - screenY;
-                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    // Repulsión intensa (como si el dedo apartara el agua violentamente)
+                    this.vx -= (dxMouse / distMouse) * force * 35 * (1/scale);
+                    this.vy -= (dyMouse / distMouse) * force * 35 * (1/scale);
                     
-                    // If far enough, swim towards pointer
-                    if (dist > 30 && dist < 1200) {
-                        const pullForce = 0.015 * (1/scale); // Gentle pull
-                        this.vx += (dx / dist) * pullForce;
-                        this.vy += (dy / dist) * pullForce;
-                        
-                        // Add slight rotation around the pointer
-                        this.vx += (dy / dist) * pullForce * 0.3;
-                        this.vy -= (dx / dist) * pullForce * 0.3;
-                    }
+                    // Efecto vórtice/remolino brutal alrededor del dedo
+                    this.vx += (dyMouse / distMouse) * force * 20 * (1/scale);
+                    this.vy -= (dxMouse / distMouse) * force * 20 * (1/scale);
                 }
 
                 // Apply velocity and wobble controlled by scroll
-                const scrollIntensity = Math.min(Math.abs(scrollDelta) / 5, 5); // Normaliza la intensidad del scroll
-                const dynamicWobbleSpeed = this.wobbleSpeed * (1 + scrollIntensity * 2); // Wobble rápido solo si hay scroll
+                const scrollIntensity = Math.min(Math.abs(scrollDelta) / 5, 5); 
+                const dynamicWobbleSpeed = this.wobbleSpeed * (1 + scrollIntensity * 2); 
                 
                 this.wobblePhase += dynamicWobbleSpeed;
                 
-                // Amplitud del wobble también controlada por el scroll
-                const wobbleAmplitudeX = 0.2 + (scrollIntensity * 0.8);
-                const wobbleAmplitudeY = 0.1 + (scrollIntensity * 0.6);
+                const wobbleAmplitudeX = 0.3 + (scrollIntensity * 0.8);
+                const wobbleAmplitudeY = 0.1 + (scrollIntensity * 0.5);
                 
                 this.x += this.vx + Math.cos(this.wobblePhase) * wobbleAmplitudeX;
                 this.y += this.vy + Math.sin(this.wobblePhase) * wobbleAmplitudeY;
+                
+                // Guardar posición actual para el cálculo de ángulo en draw()
+                this.currentScreenX = (window.innerWidth / 2) + this.x * scale;
+                this.currentScreenY = (window.innerHeight / 2) + this.y * scale;
             }
 
             draw(opacityMultiplier = 1) {
                 if (this.z < 1) return;
 
-                // 3D Projection
                 const fov = 800;
                 const scale = fov / (fov + this.z);
-                const screenX = (window.innerWidth / 2) + this.x * scale;
-                const screenY = (window.innerHeight / 2) + this.y * scale;
                 const size = this.baseSize * scale;
 
                 // Cull if outside screen
-                if (screenX < -50 || screenX > window.innerWidth + 50 || 
-                    screenY < -50 || screenY > window.innerHeight + 50) {
+                if (this.currentScreenX < -50 || this.currentScreenX > window.innerWidth + 50 || 
+                    this.currentScreenY < -50 || this.currentScreenY > window.innerHeight + 50) {
                     return;
                 }
 
-                // Calculate radial angle from center of screen for the "warp/dive" stretch effect
-                const centerX = window.innerWidth / 2;
-                const centerY = window.innerHeight / 2;
-                const dx = screenX - centerX;
-                const dy = screenY - centerY;
+                // Calculate angle based on actual movement on screen
+                // Esto hace que se estiren en la dirección que viajan, no desde el centro de la pantalla
+                const dx = this.currentScreenX - this.lastScreenX;
+                const dy = this.currentScreenY - this.lastScreenY;
                 const angle = Math.atan2(dy, dx);
                 
-                // Stretch based on scroll speed (Z-speed) AND proximity to camera
-                const scrollDelta = Math.abs(targetScroll - currentScroll);
-                const zSpeed = (scrollDelta * 2.5) + 0.5; // AGRESIVO: Reacciona con fuerza al scroll
-                
-                // Only stretch significantly if moving fast AND close to camera. Capped to prevent laser effect
-                const rawStretch = Math.max(1, (zSpeed / 8) * (1000 / Math.max(this.z, 100)));
-                const stretch = Math.min(rawStretch, 8.0); // EFECTO WARP SPEED: Se estiran como estrellas de Star Wars
+                // Stretch based on actual screen speed
+                const speed = Math.sqrt(dx*dx + dy*dy);
+                const stretch = Math.min(Math.max(1, speed / 3), 6.0); // Límite natural de deformación
 
                 ctx.save();
-                ctx.translate(screenX, screenY);
+                ctx.translate(this.currentScreenX, this.currentScreenY);
                 ctx.rotate(angle);
-                ctx.scale(stretch, 1); // Stretch radially outwards
+                ctx.scale(stretch, 1); 
 
                 ctx.beginPath();
                 ctx.arc(0, 0, size, 0, Math.PI * 2);
                 
-                // Bubbles fade in the distance and get brighter/larger up close. 
-                // Add a slight cyan tint to look like marine snow
                 const opacity = Math.min(0.6, 0.1 + (scale * 0.5)) * opacityMultiplier;
                 ctx.fillStyle = `rgba(200, 230, 255, ${opacity})`;
                 ctx.fill();
