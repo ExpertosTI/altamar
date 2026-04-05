@@ -28,6 +28,7 @@ services:
         - "traefik.docker.network=RenaceNet"
 
   goaccess:
+    image: pescaderia_goaccess:latest
     build: ./goaccess
     environment:
       - LANG=es_ES.UTF-8
