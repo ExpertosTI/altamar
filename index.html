@@ -1250,8 +1250,8 @@
                     
                     // Si el video ya cargó su metadata, mapeamos el tiempo
                     if (video.readyState >= 1 && !isNaN(video.duration) && video.duration > 0) {
-                        // Usamos video.duration - 0.05 para evitar un frame negro al final
-                        const maxTime = video.duration - 0.05;
+                        // Recortamos el final (ej. 1.5 segundos) para evitar los últimos frames que no se ven bien
+                        const maxTime = video.duration - 1.5; 
                         video.currentTime = progress * maxTime;
                     }
                     
