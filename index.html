@@ -952,6 +952,35 @@
         // Fallback timeout in case videos fail to load or take too long (5 seconds max)
         const loaderTimeout = setTimeout(hideLoader, 5000);
 
+        let lazyObserverSetup = false;
+
+        const setupLazyVideos = () => {
+            if (lazyObserverSetup) return;
+            lazyObserverSetup = true;
+            
+            // Lazy load and pause off-screen videos using IntersectionObserver for better performance
+            const lazyVideos = document.querySelectorAll('.lazy-video');
+            if ('IntersectionObserver' in window) {
+                const videoObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        const vid = entry.target;
+                        if (entry.isIntersecting) {
+                            // Cargar el source solo cuando entra en pantalla por primera vez
+                            if (!vid.src && vid.dataset.src) {
+                                vid.src = vid.dataset.src;
+                                vid.load();
+                            }
+                            vid.preload = 'auto';
+                            vid.play().catch(e => console.log('Auto-play prevented:', e));
+                        } else {
+                            vid.pause();
+                        }
+                    });
+                }, { rootMargin: "-10% 0px" }); // Cambiado a -10% para asegurar que solo cargue cuando realmente empiece a entrar en pantalla
+                lazyVideos.forEach(vid => videoObserver.observe(vid));
+            }
+        };
+
         const checkVideosLoaded = () => {
             const bgLoaded = video.readyState >= 3; // HAVE_FUTURE_DATA
             // We no longer block on firstOfferVid since it is data-src lazy loaded
@@ -959,6 +988,7 @@
             if (bgLoaded) {
                 clearTimeout(loaderTimeout);
                 hideLoader();
+                setupLazyVideos(); // Solo inicializar videos lazy cuando el bg ya cargó
             }
         };
 
@@ -966,28 +996,9 @@
         
         // Check immediately in case they are already loaded
         checkVideosLoaded();
-
-        // Lazy load and pause off-screen videos using IntersectionObserver for better performance
-        const lazyVideos = document.querySelectorAll('.lazy-video');
-        if ('IntersectionObserver' in window) {
-            const videoObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    const vid = entry.target;
-                    if (entry.isIntersecting) {
-                        // Cargar el source solo cuando entra en pantalla por primera vez
-                        if (!vid.src && vid.dataset.src) {
-                            vid.src = vid.dataset.src;
-                            vid.load();
-                        }
-                        vid.preload = 'auto';
-                        vid.play().catch(e => console.log('Auto-play prevented:', e));
-                    } else {
-                        vid.pause();
-                    }
-                });
-            }, { rootMargin: "100px" });
-            lazyVideos.forEach(vid => videoObserver.observe(vid));
-        }
+        
+        // If loader times out, setup lazy videos anyway
+        setTimeout(setupLazyVideos, 5000);
 
         // -----------------------
         // Canvas 3D Bubble / Swim Logic
@@ -1263,8 +1274,8 @@
                         const maxTime = video.duration - 1.5; 
                         const newTime = progress * maxTime;
                         
-                        // Evitar spam de peticiones 206 limitando la actualización del tiempo a diferencias > 0.03s (aprox 30fps)
-                        if (Math.abs(video.currentTime - newTime) > 0.03) {
+                        // Evitar spam de peticiones 206 limitando la actualización del tiempo a diferencias > 0.08s (aprox 12fps) para dispositivos móviles/safari
+                        if (Math.abs(video.currentTime - newTime) > 0.08) {
                             video.currentTime = newTime;
                         }
                     }
