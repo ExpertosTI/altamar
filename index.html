@@ -16,9 +16,7 @@
     <meta name="theme-color" content="#000c18">
     <link rel="icon" type="image/png" href="assets/AltamarLogo.png">
     
-    <!-- Preloads para priorizar cargas y acelerar First Contentful Paint -->
-    <link rel="preload" as="video" href="assets/bg-scrub-mobile.mp4" media="(max-width: 768px)">
-    <link rel="preload" as="video" href="assets/bg-scrub-desktop.mp4" media="(min-width: 769px)">
+    <!-- Priorizar cargas -->
     <link rel="preload" as="image" href="assets/AltamarLogo.png">
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&family=Montserrat:wght@300;400;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&family=Montserrat:wght@300;400;600&display=swap"></noscript>
@@ -702,8 +700,23 @@
     <video id="intro-scrub-video" muted playsinline preload="auto" class="bg-video" style="transform-origin: center center; width: 100vw; height: 100vh; object-fit: cover;">
     </video>
     <script>
-        // Asignar el src inmediatamente para que comience a descargar sin esperar al final del DOM
-        document.getElementById('intro-scrub-video').src = window.innerWidth <= 768 ? 'assets/bg-scrub-mobile.mp4' : 'assets/bg-scrub-desktop.mp4';
+        // Técnica profesional para videos de "Scrubbing": Descargarlo entero como Blob.
+        // Esto elimina por completo las peticiones repetidas (206 Partial Content) 
+        // y garantiza que el scroll sea 100% fluido porque el video está en la RAM.
+        const scrubVideo = document.getElementById('intro-scrub-video');
+        const bgVideoSrc = window.innerWidth <= 768 ? 'assets/bg-scrub-mobile.mp4' : 'assets/bg-scrub-desktop.mp4';
+        
+        fetch(bgVideoSrc)
+            .then(response => response.blob())
+            .then(blob => {
+                const videoBlobUrl = URL.createObjectURL(blob);
+                scrubVideo.src = videoBlobUrl;
+            })
+            .catch(error => {
+                console.error('Error precargando el video de fondo:', error);
+                // Fallback de seguridad por si falla el fetch
+                scrubVideo.src = bgVideoSrc;
+            });
     </script>
 
     <!-- Deep sea darkening overlay removed per user request -->
@@ -957,8 +970,8 @@
             }
         };
 
-        // Aumentamos el timeout a 8s para dar más margen en conexiones muy lentas
-        const loaderTimeout = setTimeout(hideLoader, 8000);
+        // Aumentamos el timeout a 15s para dar más margen en conexiones muy lentas o móviles 3G
+        const loaderTimeout = setTimeout(hideLoader, 15000);
 
         const checkVideosLoaded = () => {
             // Requerimos HAVE_ENOUGH_DATA (4) para asegurar que el video principal puede reproducirse suavemente
@@ -980,7 +993,7 @@
         setTimeout(() => { 
             window.isBgLoadedForLazy = true; 
             window.dispatchEvent(new Event('backgroundVideoReady'));
-        }, 8000);
+        }, 15000);
 
         // -----------------------
         // Canvas 3D Bubble / Swim Logic
