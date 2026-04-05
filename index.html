@@ -8,11 +8,11 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <!-- Security and Performance Meta Tags -->
     <meta name="theme-color" content="#000c18">
-    <link rel="preload" href="assets/bg-scrub-optimized.mp4" as="video" type="video/mp4" crossorigin="anonymous">
+    <link rel="preload" href="assets/bg-scrub-optimized.mp4" as="video" type="video/mp4">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest" defer></script>
     <style>
         :root {
@@ -69,11 +69,13 @@
         }
 
         .loader-text {
-            font-family: 'Playfair Display', serif;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 1.2rem;
             color: var(--accent-gold);
             letter-spacing: 2px;
             animation: pulse 1.5s ease-in-out infinite;
+            text-align: center;
+            padding: 0 20px;
         }
 
         @keyframes pulse {
@@ -194,7 +196,7 @@
             margin-top: 20px;
             text-shadow: 0 4px 10px rgba(0,0,0,0.8);
             transition: opacity 0.3s ease, transform 0.3s ease;
-            font-family: 'Courier New', Courier, monospace; /* Máquina de escribir / AI */
+            font-family: 'Space Grotesk', sans-serif; /* Cleaner modern font */
             display: inline-block;
         }
 
@@ -345,7 +347,7 @@
         }
 
         .glass-card h2 {
-            font-family: 'Playfair Display', serif;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 2.5rem;
             margin-bottom: 20px;
             color: var(--accent-gold);
@@ -664,7 +666,7 @@
     <!-- Hero Overlay -->
     <div id="hero-overlay" class="fixed-hero is-visible">
         <img src="assets/AltamarLogo.png" alt="Pescadería Altamar Logo" class="hero-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-        <h1 class="hero-names" style="display:none; font-family: 'Playfair Display', serif; font-size: 4rem; font-weight: 900; text-shadow: 0 4px 20px rgba(0,0,0,0.5);">Pescadería Altamar</h1>
+        <h1 class="hero-names" style="display:none; font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 8vw, 4rem); font-weight: 900; text-shadow: 0 4px 20px rgba(0,0,0,0.5); line-height: 1.1;">Pescadería Altamar</h1>
         <div><span class="hero-quote" id="typewriter-text"></span><span class="typewriter-cursor"></span></div>
     </div>
 
@@ -678,7 +680,7 @@
             <!-- Removed glass-card background to see the video -->
             <div style="max-width: 1000px; width: 100%; text-align: center;">
                 <i data-lucide="tag" class="card-icon" style="margin-bottom: 10px; width: 40px; height: 40px; color: var(--accent-gold);"></i>
-                <h2 style="font-family: 'Playfair Display', serif; font-size: clamp(2rem, 5vw, 3rem); font-weight: 900; text-shadow: 0 4px 20px rgba(0,0,0,0.8); margin-bottom: 10px;">Ofertas del Día</h2>
+                <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: clamp(2rem, 8vw, 3rem); font-weight: 900; text-shadow: 0 4px 20px rgba(0,0,0,0.8); margin-bottom: 10px; line-height: 1.1;">Ofertas del Día</h2>
                 <p style="margin-bottom: 40px; opacity: 0.9; text-shadow: 0 2px 10px rgba(0,0,0,0.8); font-size: 1.1rem;">Descubre nuestras capturas más frescas.</p>
                 
                 <div class="ig-grid">
@@ -890,12 +892,48 @@
         }, { passive: true });
 
         // Ensure video is visible once metadata is loaded
+        const loader = document.getElementById('loader');
+        
         video.addEventListener('loadedmetadata', () => {
             video.classList.add('is-visible');
         });
         if (video.readyState >= 1) {
             video.classList.add('is-visible');
         }
+
+        // Loader Dismissal Logic
+        // Dismiss loader immediately after background and first offer video load
+        const firstOfferVid = document.querySelector('.lazy-video');
+        if (firstOfferVid) {
+            firstOfferVid.preload = 'auto'; // Force preload the first video
+        }
+
+        const hideLoader = () => {
+            if (loader && !loader.classList.contains('is-hidden')) {
+                loader.classList.add('is-hidden');
+            }
+        };
+
+        // Fallback timeout in case videos fail to load or take too long (5 seconds max)
+        const loaderTimeout = setTimeout(hideLoader, 5000);
+
+        const checkVideosLoaded = () => {
+            const bgLoaded = video.readyState >= 3; // HAVE_FUTURE_DATA
+            const firstOfferLoaded = !firstOfferVid || firstOfferVid.readyState >= 3;
+            
+            if (bgLoaded && firstOfferLoaded) {
+                clearTimeout(loaderTimeout);
+                hideLoader();
+            }
+        };
+
+        video.addEventListener('canplay', checkVideosLoaded);
+        if (firstOfferVid) {
+            firstOfferVid.addEventListener('canplay', checkVideosLoaded);
+        }
+        
+        // Check immediately in case they are already loaded
+        checkVideosLoaded();
 
         // Lazy load and pause off-screen videos using IntersectionObserver for better performance
         const lazyVideos = document.querySelectorAll('.lazy-video');
