@@ -3,14 +3,29 @@ version: '3.8'
 services:
   nginx:
     image: nginx:alpine
-    ports:
-      - "80:80"
     volumes:
       - ./:/usr/share/nginx/html:ro
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginx/logs:/var/log/nginx
       - ./nginx/admin:/var/www/admin
-    restart: unless-stopped
+    networks:
+      - RenaceNet
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.pescaderia-altamar-http.rule=Host(`pescaderiaaltamar.com`) || Host(`www.pescaderiaaltamar.com`)"
+        - "traefik.http.routers.pescaderia-altamar-http.entrypoints=web"
+        - "traefik.http.routers.pescaderia-altamar-http.middlewares=pescaderia-altamar-redirect-https"
+        - "traefik.http.routers.pescaderia-altamar-https.rule=Host(`pescaderiaaltamar.com`) || Host(`www.pescaderiaaltamar.com`)"
+        - "traefik.http.routers.pescaderia-altamar-https.entrypoints=websecure"
+        - "traefik.http.routers.pescaderia-altamar-https.tls=true"
+        - "traefik.http.routers.pescaderia-altamar-https.tls.certresolver=letsencryptresolver"
+        - "traefik.http.middlewares.pescaderia-altamar-redirect-https.redirectscheme.scheme=https"
+        - "traefik.http.services.pescaderia-altamar-svc.loadbalancer.server.port=80"
+        - "traefik.docker.network=RenaceNet"
 
   goaccess:
     build: ./goaccess
@@ -24,4 +39,13 @@ services:
       - ./nginx/admin:/srv/report
     command: >
       /srv/logs/access.log --log-format=COMBINED --real-time-html --port=7890 --output=/srv/report/index.html --ignore-panel=STATIC --ignore-panel=NOT_FOUND --ignore-panel=TIME_DISTRIBUTION --ignore-panel=VIRTUAL_HOSTS --ignore-panel=REFERRERS --ignore-panel=REFERRING_SITES --ignore-panel=KEYPHRASES --ignore-panel=STATUS_CODES --ignore-panel=MIME_TYPE --ignore-panel=TLS_TYPE
-    restart: unless-stopped
+    networks:
+      - RenaceNet
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+networks:
+  RenaceNet:
+    external: true
