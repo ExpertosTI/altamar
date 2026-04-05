@@ -14,7 +14,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <!-- Security and Performance Meta Tags -->
     <meta name="theme-color" content="#000c18">
-    <link rel="preload" href="assets/bg-scrub-optimized.mp4" as="video" type="video/mp4">
+    <link rel="icon" type="image/png" href="assets/AltamarLogo.png">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -920,36 +920,20 @@
         let currentScroll = 0;
         let hasPlayedTvEffect = false;
         
-        // --- BLOB FETCH LOGIC FOR FLAWLESS SCRUBBING ---
-        // Fetching the entire video as a Blob prevents the browser from spamming
-        // hundreds of canceled HTTP 206 Range requests when rapidly scrubbing via currentTime.
+        // Asignación directa del video para evitar bloqueos de red con Blob Fetch
         let isScrubbingReady = false;
-        const loadVideoBlob = async () => {
-            const videoSrc = window.innerWidth <= 768 ? 'assets/bg-scrub-mobile.mp4' : 'assets/bg-scrub-desktop.mp4';
-            try {
-                const response = await fetch(videoSrc);
-                if (!response.ok) throw new Error("Network response was not ok");
-                const blob = await response.blob();
-                const blobUrl = URL.createObjectURL(blob);
-                
-                video.src = blobUrl;
-                
-                video.addEventListener('loadedmetadata', () => {
-                    video.classList.add('is-visible');
-                    isScrubbingReady = true;
-                });
-                video.load();
-            } catch (err) {
-                console.error("Error fetching video blob, fallback to standard src", err);
-                video.src = videoSrc;
-                video.load();
-                video.addEventListener('loadedmetadata', () => {
-                    video.classList.add('is-visible');
-                    isScrubbingReady = true;
-                });
-            }
-        };
-        loadVideoBlob();
+        const videoSrc = window.innerWidth <= 768 ? 'assets/bg-scrub-mobile.mp4' : 'assets/bg-scrub-desktop.mp4';
+        
+        // Se asegura que tenga el source correcto
+        video.src = videoSrc;
+        video.preload = 'auto'; // Permitimos al navegador hacer partial requests (206) pero que lo maneje nativamente
+        
+        video.addEventListener('loadedmetadata', () => {
+            video.classList.add('is-visible');
+            isScrubbingReady = true;
+        });
+        
+        // Evitamos llamar a video.load() a menos que sea estrictamente necesario para no duplicar requests
         
         // Update body height for virtual scroll
         const setBodyHeight = () => {
@@ -1290,7 +1274,12 @@
                     if (video.readyState >= 1 && !isNaN(video.duration) && video.duration > 0) {
                         // Recortamos el final (ej. 1.5 segundos) para evitar los últimos frames que no se ven bien
                         const maxTime = video.duration - 1.5; 
-                        video.currentTime = progress * maxTime;
+                        const newTime = progress * maxTime;
+                        
+                        // Evitar spam de peticiones 206 limitando la actualización del tiempo a diferencias > 0.03s (aprox 30fps)
+                        if (Math.abs(video.currentTime - newTime) > 0.03) {
+                            video.currentTime = newTime;
+                        }
                     }
                     
                     // Efecto dinámico de inmersión (parallax/scale) basado en el scroll total
@@ -1428,12 +1417,14 @@
                     let translateY = (vh / 2) - center;
                     
                     section.style.opacity = Math.max(0, opacity);
+                    section.style.visibility = opacity > 0.05 ? 'visible' : 'hidden';
                     section.style.transform = `translateY(${translateY}px) scale(${Math.max(0.2, scale)})`;
                     section.style.pointerEvents = opacity > 0.5 ? 'auto' : 'none';
                 } else {
                     // Cuando ya llegó al centro o está por encima, se queda estática y 100% clara,
                     // permitiendo que fluya naturalmente con el scroll del usuario hacia arriba.
                     section.style.opacity = '1';
+                    section.style.visibility = 'visible';
                     section.style.transform = `translateY(0px) scale(1)`;
                     section.style.pointerEvents = 'auto';
                 }
