@@ -16,9 +16,15 @@
     <meta name="theme-color" content="#000c18">
     <link rel="icon" type="image/png" href="assets/AltamarLogo.png">
     
+    <!-- Preloads para priorizar cargas y acelerar First Contentful Paint -->
+    <link rel="preload" as="video" href="assets/bg-scrub-mobile.mp4" media="(max-width: 768px)">
+    <link rel="preload" as="video" href="assets/bg-scrub-desktop.mp4" media="(min-width: 769px)">
+    <link rel="preload" as="image" href="assets/AltamarLogo.png">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&family=Montserrat:wght@300;400;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&family=Montserrat:wght@300;400;600&display=swap"></noscript>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest" defer></script>
     <style>
         :root {
@@ -695,6 +701,10 @@
     <!-- Background Video para Scrubbing -->
     <video id="intro-scrub-video" muted playsinline preload="auto" class="bg-video" style="transform-origin: center center; width: 100vw; height: 100vh; object-fit: cover;">
     </video>
+    <script>
+        // Asignar el src inmediatamente para que comience a descargar sin esperar al final del DOM
+        document.getElementById('intro-scrub-video').src = window.innerWidth <= 768 ? 'assets/bg-scrub-mobile.mp4' : 'assets/bg-scrub-desktop.mp4';
+    </script>
 
     <!-- Deep sea darkening overlay removed per user request -->
 
@@ -726,7 +736,7 @@
                 <div class="ig-grid">
                     <!-- Post 1 -->
                     <div class="ig-post">
-                        <video class="lazy-video" loop muted playsinline preload="none" data-src="assets/opt-capitanes.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
+                        <video class="lazy-video" loop muted playsinline preload="none" poster="assets/opt-capitanes.jpg" data-src="assets/opt-capitanes.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
                         <div style="position: absolute; inset: 0; background: rgba(0,20,40,0.2);"></div>
                         <div style="position: absolute; top: 10px; right: 10px; opacity: 0.8; color: #fff;">
                             <i data-lucide="video" style="width: 20px; height: 20px;"></i>
@@ -739,7 +749,7 @@
 
                     <!-- Post 2 -->
                     <div class="ig-post">
-                        <video class="lazy-video" loop muted playsinline preload="none" data-src="assets/opt-combo.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
+                        <video class="lazy-video" loop muted playsinline preload="none" poster="assets/opt-combo.jpg" data-src="assets/opt-combo.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
                         <div style="position: absolute; inset: 0; background: rgba(0,20,40,0.2);"></div>
                         <div style="position: absolute; top: 10px; right: 10px; opacity: 0.8; color: #fff;">
                             <i data-lucide="video" style="width: 20px; height: 20px;"></i>
@@ -752,7 +762,7 @@
 
                     <!-- Post 3 -->
                     <div class="ig-post">
-                        <video class="lazy-video" loop muted playsinline preload="none" data-src="assets/opt-camaron.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
+                        <video class="lazy-video" loop muted playsinline preload="none" poster="assets/opt-camaron.jpg" data-src="assets/opt-camaron.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
                         <div style="position: absolute; inset: 0; background: rgba(0,20,40,0.2);"></div>
                         <div style="position: absolute; top: 10px; right: 10px; opacity: 0.8; color: #fff;">
                             <i data-lucide="video" style="width: 20px; height: 20px;"></i>
@@ -765,7 +775,7 @@
 
                     <!-- Post 4 -->
                     <div class="ig-post">
-                        <video class="lazy-video" loop muted playsinline preload="none" data-src="assets/opt-doradas.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
+                        <video class="lazy-video" loop muted playsinline preload="none" poster="assets/opt-doradas.jpg" data-src="assets/opt-doradas.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
                         <div style="position: absolute; inset: 0; background: rgba(0,20,40,0.2);"></div>
                         <div style="position: absolute; top: 10px; right: 10px; opacity: 0.8; color: #fff;">
                             <i data-lucide="video" style="width: 20px; height: 20px;"></i>
@@ -778,7 +788,7 @@
 
                     <!-- Post 5 (Desktop Only) -->
                     <div class="ig-post desktop-only">
-                        <video class="lazy-video" loop muted playsinline preload="none" data-src="assets/opt-pescados.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
+                        <video class="lazy-video" loop muted playsinline preload="none" poster="assets/opt-pescados.jpg" data-src="assets/opt-pescados.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
                         <div style="position: absolute; inset: 0; background: rgba(0,20,40,0.2);"></div>
                         <div style="position: absolute; top: 10px; right: 10px; opacity: 0.8; color: #fff;">
                             <i data-lucide="video" style="width: 20px; height: 20px;"></i>
@@ -791,7 +801,7 @@
 
                     <!-- Post 6 (Desktop Only) -->
                     <div class="ig-post desktop-only">
-                        <video class="lazy-video" loop muted playsinline preload="none" data-src="assets/opt-cliente.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
+                        <video class="lazy-video" loop muted playsinline preload="none" poster="assets/opt-cliente.jpg" data-src="assets/opt-cliente.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
                         <div style="position: absolute; inset: 0; background: rgba(0,20,40,0.2);"></div>
                         <div style="position: absolute; top: 10px; right: 10px; opacity: 0.8; color: #fff;">
                             <i data-lucide="video" style="width: 20px; height: 20px;"></i>
@@ -908,12 +918,9 @@
         let currentScroll = 0;
         let hasPlayedTvEffect = false;
         
-        // Asignación directa del video
+        // Asignación directa del video (ya asignado arriba en el HTML)
         let isScrubbingReady = false;
-        const videoSrc = window.innerWidth <= 768 ? 'assets/bg-scrub-mobile.mp4' : 'assets/bg-scrub-desktop.mp4';
         
-        // 1. Se asegura que tenga el source correcto para carga rápida
-        video.src = videoSrc;
         video.preload = 'auto';
         
         video.addEventListener('loadedmetadata', () => {
@@ -1400,7 +1407,9 @@
                         const vids = section.querySelectorAll('.lazy-video');
                         if (opacity > 0.1) {
                             vids.forEach(vid => {
-                                if (!vid.src && vid.dataset.src) vid.src = vid.dataset.src;
+                                if (!vid.getAttribute('src') && vid.dataset.src) {
+                                    vid.setAttribute('src', vid.dataset.src);
+                                }
                                 if (vid.paused) vid.play().catch(e => {});
                             });
                         } else {
@@ -1421,7 +1430,9 @@
                     if (window.isBgLoadedForLazy) {
                         const vids = section.querySelectorAll('.lazy-video');
                         vids.forEach(vid => {
-                            if (!vid.src && vid.dataset.src) vid.src = vid.dataset.src;
+                            if (!vid.getAttribute('src') && vid.dataset.src) {
+                                vid.setAttribute('src', vid.dataset.src);
+                            }
                             if (vid.paused) vid.play().catch(e => {});
                         });
                     }
