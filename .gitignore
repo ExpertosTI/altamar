@@ -1,0 +1,22 @@
+# Archivos del sistema
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs y bases de datos de GoAccess / Nginx
+nginx/logs/*.log
+nginx/logs/*.gz
+*.log
+
+# Empaquetados / Comprimidos
+*.tar.gz
+*.zip
+*.rar
+
+# Contenedores y entornos virtuales
+.env
+.docker
