@@ -1164,10 +1164,18 @@
                     }
                 }
 
-                // Apply velocity and wobble
-                this.wobblePhase += this.wobbleSpeed;
-                this.x += this.vx + Math.cos(this.wobblePhase) * 1.5;
-                this.y += this.vy + Math.sin(this.wobblePhase) * 1.0;
+                // Apply velocity and wobble controlled by scroll
+                const scrollIntensity = Math.min(Math.abs(scrollDelta) / 5, 5); // Normaliza la intensidad del scroll
+                const dynamicWobbleSpeed = this.wobbleSpeed * (1 + scrollIntensity * 2); // Wobble rápido solo si hay scroll
+                
+                this.wobblePhase += dynamicWobbleSpeed;
+                
+                // Amplitud del wobble también controlada por el scroll
+                const wobbleAmplitudeX = 0.2 + (scrollIntensity * 0.8);
+                const wobbleAmplitudeY = 0.1 + (scrollIntensity * 0.6);
+                
+                this.x += this.vx + Math.cos(this.wobblePhase) * wobbleAmplitudeX;
+                this.y += this.vy + Math.sin(this.wobblePhase) * wobbleAmplitudeY;
             }
 
             draw(opacityMultiplier = 1) {
@@ -1200,11 +1208,6 @@
                 // Only stretch significantly if moving fast AND close to camera. Capped to prevent laser effect
                 const rawStretch = Math.max(1, (zSpeed / 8) * (1000 / Math.max(this.z, 100)));
                 const stretch = Math.min(rawStretch, 8.0); // EFECTO WARP SPEED: Se estiran como estrellas de Star Wars
-
-                // Además del stretch, agregamos una aberración lateral basada en la velocidad de scroll
-                const speedWobble = Math.min(scrollDelta * 0.5, 10);
-                this.x += (Math.random() - 0.5) * speedWobble;
-                this.y += (Math.random() - 0.5) * speedWobble;
 
                 ctx.save();
                 ctx.translate(screenX, screenY);
