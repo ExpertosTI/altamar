@@ -726,9 +726,7 @@
                 <div class="ig-grid">
                     <!-- Post 1 -->
                     <div class="ig-post">
-                        <video class="lazy-video" loop muted playsinline preload="none" style="width: 100%; height: 100%; object-fit: cover;">
-                            <source src="assets/opt-capitanes.mp4" type="video/mp4">
-                        </video>
+                        <video class="lazy-video" loop muted playsinline preload="none" data-src="assets/opt-capitanes.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
                         <div style="position: absolute; inset: 0; background: rgba(0,20,40,0.2);"></div>
                         <div style="position: absolute; top: 10px; right: 10px; opacity: 0.8; color: #fff;">
                             <i data-lucide="video" style="width: 20px; height: 20px;"></i>
@@ -741,9 +739,7 @@
 
                     <!-- Post 2 -->
                     <div class="ig-post">
-                        <video class="lazy-video" loop muted playsinline preload="none" style="width: 100%; height: 100%; object-fit: cover;">
-                            <source src="assets/opt-combo.mp4" type="video/mp4">
-                        </video>
+                        <video class="lazy-video" loop muted playsinline preload="none" data-src="assets/opt-combo.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
                         <div style="position: absolute; inset: 0; background: rgba(0,20,40,0.2);"></div>
                         <div style="position: absolute; top: 10px; right: 10px; opacity: 0.8; color: #fff;">
                             <i data-lucide="video" style="width: 20px; height: 20px;"></i>
@@ -756,9 +752,7 @@
 
                     <!-- Post 3 -->
                     <div class="ig-post">
-                        <video class="lazy-video" loop muted playsinline preload="none" style="width: 100%; height: 100%; object-fit: cover;">
-                            <source src="assets/opt-camaron.mp4" type="video/mp4">
-                        </video>
+                        <video class="lazy-video" loop muted playsinline preload="none" data-src="assets/opt-camaron.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
                         <div style="position: absolute; inset: 0; background: rgba(0,20,40,0.2);"></div>
                         <div style="position: absolute; top: 10px; right: 10px; opacity: 0.8; color: #fff;">
                             <i data-lucide="video" style="width: 20px; height: 20px;"></i>
@@ -771,9 +765,7 @@
 
                     <!-- Post 4 -->
                     <div class="ig-post">
-                        <video class="lazy-video" loop muted playsinline preload="none" style="width: 100%; height: 100%; object-fit: cover;">
-                            <source src="assets/opt-doradas.mp4" type="video/mp4">
-                        </video>
+                        <video class="lazy-video" loop muted playsinline preload="none" data-src="assets/opt-doradas.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
                         <div style="position: absolute; inset: 0; background: rgba(0,20,40,0.2);"></div>
                         <div style="position: absolute; top: 10px; right: 10px; opacity: 0.8; color: #fff;">
                             <i data-lucide="video" style="width: 20px; height: 20px;"></i>
@@ -786,9 +778,7 @@
 
                     <!-- Post 5 (Desktop Only) -->
                     <div class="ig-post desktop-only">
-                        <video class="lazy-video" loop muted playsinline preload="none" style="width: 100%; height: 100%; object-fit: cover;">
-                            <source src="assets/opt-pescados.mp4" type="video/mp4">
-                        </video>
+                        <video class="lazy-video" loop muted playsinline preload="none" data-src="assets/opt-pescados.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
                         <div style="position: absolute; inset: 0; background: rgba(0,20,40,0.2);"></div>
                         <div style="position: absolute; top: 10px; right: 10px; opacity: 0.8; color: #fff;">
                             <i data-lucide="video" style="width: 20px; height: 20px;"></i>
@@ -801,9 +791,7 @@
 
                     <!-- Post 6 (Desktop Only) -->
                     <div class="ig-post desktop-only">
-                        <video class="lazy-video" loop muted playsinline preload="none" style="width: 100%; height: 100%; object-fit: cover;">
-                            <source src="assets/opt-cliente.mp4" type="video/mp4">
-                        </video>
+                        <video class="lazy-video" loop muted playsinline preload="none" data-src="assets/opt-cliente.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
                         <div style="position: absolute; inset: 0; background: rgba(0,20,40,0.2);"></div>
                         <div style="position: absolute; top: 10px; right: 10px; opacity: 0.8; color: #fff;">
                             <i data-lucide="video" style="width: 20px; height: 20px;"></i>
@@ -954,9 +942,6 @@
         // Loader Dismissal Logic
         // Dismiss loader immediately after background and first offer video load
         const firstOfferVid = document.querySelector('.lazy-video');
-        if (firstOfferVid) {
-            firstOfferVid.preload = 'auto'; // Force preload the first video
-        }
 
         const hideLoader = () => {
             if (loader && !loader.classList.contains('is-hidden')) {
@@ -969,18 +954,15 @@
 
         const checkVideosLoaded = () => {
             const bgLoaded = video.readyState >= 3; // HAVE_FUTURE_DATA
-            const firstOfferLoaded = !firstOfferVid || firstOfferVid.readyState >= 3;
+            // We no longer block on firstOfferVid since it is data-src lazy loaded
             
-            if (bgLoaded && firstOfferLoaded) {
+            if (bgLoaded) {
                 clearTimeout(loaderTimeout);
                 hideLoader();
             }
         };
 
         video.addEventListener('canplay', checkVideosLoaded);
-        if (firstOfferVid) {
-            firstOfferVid.addEventListener('canplay', checkVideosLoaded);
-        }
         
         // Check immediately in case they are already loaded
         checkVideosLoaded();
@@ -992,13 +974,18 @@
                 entries.forEach(entry => {
                     const vid = entry.target;
                     if (entry.isIntersecting) {
+                        // Cargar el source solo cuando entra en pantalla por primera vez
+                        if (!vid.src && vid.dataset.src) {
+                            vid.src = vid.dataset.src;
+                            vid.load();
+                        }
                         vid.preload = 'auto';
                         vid.play().catch(e => console.log('Auto-play prevented:', e));
                     } else {
                         vid.pause();
                     }
                 });
-            }, { rootMargin: "50px" });
+            }, { rootMargin: "100px" });
             lazyVideos.forEach(vid => videoObserver.observe(vid));
         }
 
