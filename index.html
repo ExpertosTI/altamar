@@ -692,8 +692,8 @@
     </div>
 
     <!-- Intro Video (Scrubbing puro atado al scroll) -->
-    <!-- Background Video para Scrubbing (Blob Fetch via JS) -->
-    <video id="intro-scrub-video" muted playsinline class="bg-video" style="transform-origin: center center; width: 100vw; height: 100vh; object-fit: cover;">
+    <!-- Background Video para Scrubbing -->
+    <video id="intro-scrub-video" muted playsinline preload="auto" class="bg-video" style="transform-origin: center center; width: 100vw; height: 100vh; object-fit: cover;">
     </video>
 
     <!-- Deep sea darkening overlay removed per user request -->
@@ -940,9 +940,6 @@
         const loader = document.getElementById('loader');
 
         // Loader Dismissal Logic
-        // Dismiss loader immediately after background and first offer video load
-        const firstOfferVid = document.querySelector('.lazy-video');
-
         const hideLoader = () => {
             if (loader && !loader.classList.contains('is-hidden')) {
                 loader.classList.add('is-hidden');
@@ -952,42 +949,13 @@
         // Fallback timeout in case videos fail to load or take too long (5 seconds max)
         const loaderTimeout = setTimeout(hideLoader, 5000);
 
-        let lazyObserverSetup = false;
-
-        const setupLazyVideos = () => {
-            if (lazyObserverSetup) return;
-            lazyObserverSetup = true;
-            
-            // Lazy load and pause off-screen videos using IntersectionObserver for better performance
-            const lazyVideos = document.querySelectorAll('.lazy-video');
-            if ('IntersectionObserver' in window) {
-                const videoObserver = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        const vid = entry.target;
-                        if (entry.isIntersecting) {
-                            // Cargar el source solo cuando entra en pantalla por primera vez
-                            if (!vid.src && vid.dataset.src) {
-                                vid.src = vid.dataset.src;
-                                // No llamamos vid.load() explícitamente para evitar doble petición (doble carga en Safari)
-                            }
-                            vid.play().catch(e => console.log('Auto-play prevented:', e));
-                        } else {
-                            vid.pause();
-                        }
-                    });
-                }, { rootMargin: "-10% 0px" }); // Cambiado a -10% para asegurar que solo cargue cuando realmente empiece a entrar en pantalla
-                lazyVideos.forEach(vid => videoObserver.observe(vid));
-            }
-        };
-
         const checkVideosLoaded = () => {
             const bgLoaded = video.readyState >= 3; // HAVE_FUTURE_DATA
-            // We no longer block on firstOfferVid since it is data-src lazy loaded
             
             if (bgLoaded) {
                 clearTimeout(loaderTimeout);
                 hideLoader();
-                setupLazyVideos(); // Solo inicializar videos lazy cuando el bg ya cargó
+                window.isBgLoadedForLazy = true; // Flag to allow lazy loading
             }
         };
 
@@ -996,8 +964,8 @@
         // Check immediately in case they are already loaded
         checkVideosLoaded();
         
-        // If loader times out, setup lazy videos anyway
-        setTimeout(setupLazyVideos, 5000);
+        // If loader times out, allow lazy videos anyway
+        setTimeout(() => { window.isBgLoadedForLazy = true; }, 5000);
 
         // -----------------------
         // Canvas 3D Bubble / Swim Logic
@@ -1426,6 +1394,21 @@
                     section.style.visibility = opacity > 0.05 ? 'visible' : 'hidden';
                     section.style.transform = `translateY(${translateY}px) scale(${Math.max(0.2, scale)})`;
                     section.style.pointerEvents = opacity > 0.5 ? 'auto' : 'none';
+
+                    // Lazy load videos solo cuando la sección empieza a ser visible y el video principal ya cargó
+                    if (window.isBgLoadedForLazy) {
+                        const vids = section.querySelectorAll('.lazy-video');
+                        if (opacity > 0.1) {
+                            vids.forEach(vid => {
+                                if (!vid.src && vid.dataset.src) vid.src = vid.dataset.src;
+                                if (vid.paused) vid.play().catch(e => {});
+                            });
+                        } else {
+                            vids.forEach(vid => {
+                                if (!vid.paused) vid.pause();
+                            });
+                        }
+                    }
                 } else {
                     // Cuando ya llegó al centro o está por encima, se queda estática y 100% clara,
                     // permitiendo que fluya naturalmente con el scroll del usuario hacia arriba.
@@ -1433,6 +1416,15 @@
                     section.style.visibility = 'visible';
                     section.style.transform = `translateY(0px) scale(1)`;
                     section.style.pointerEvents = 'auto';
+
+                    // Asegurarse de que los videos estén corriendo
+                    if (window.isBgLoadedForLazy) {
+                        const vids = section.querySelectorAll('.lazy-video');
+                        vids.forEach(vid => {
+                            if (!vid.src && vid.dataset.src) vid.src = vid.dataset.src;
+                            if (vid.paused) vid.play().catch(e => {});
+                        });
+                    }
                 }
             });
 
