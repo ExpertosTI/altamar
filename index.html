@@ -697,7 +697,7 @@
 
     <!-- Intro Video (Scrubbing puro atado al scroll) -->
     <!-- Background Video para Scrubbing -->
-    <video id="intro-scrub-video" muted playsinline preload="auto" class="bg-video" style="transform-origin: center center; width: 100vw; height: 100vh; object-fit: cover;">
+    <video id="intro-scrub-video" poster="assets/bg-poster.jpg" muted playsinline preload="auto" class="bg-video" style="transform-origin: center center; width: 100vw; height: 100vh; object-fit: cover;">
     </video>
     <script>
         // Técnica profesional para videos de "Scrubbing": Descargarlo entero como Blob.
@@ -728,13 +728,14 @@
         }
 
         // 2. Asignar el video inicial
-        // Escritorio SIEMPRE descarga la mejor calidad (Desktop).
-        // Móvil evaluará la red: si es lenta carga el "Low", si es rápida carga el "Optimized" de una vez (Sensación Premium).
+        // Usamos las versiones ULTRA comprimidas para carga inmediata.
+        // Escritorio: 720p super comprimido (1 MB)
+        // Móvil: 480p super comprimido (500 KB)
         let initialBgVideoSrc;
         if (!isMobile) {
-            initialBgVideoSrc = 'assets/bg-scrub-desktop.mp4';
+            initialBgVideoSrc = 'assets/bg-scrub-720p-low.mp4';
         } else {
-            initialBgVideoSrc = connectionQuality === 'low' ? 'assets/bg-scrub-low.mp4' : 'assets/bg-scrub-optimized.mp4';
+            initialBgVideoSrc = 'assets/bg-scrub-480p.mp4';
         }
         
         console.log(`📡 Cargando video inicial: ${initialBgVideoSrc} | Calidad de red: ${connectionQuality}`);
@@ -746,39 +747,32 @@
                 const videoBlobUrl = URL.createObjectURL(blob);
                 scrubVideo.src = videoBlobUrl;
                 
-                // 4. Mejora Progresiva para Móvil (Solo si cargamos el de baja calidad por red lenta)
-                // Una vez que todos los elementos se descarguen (evento load),
-                // intentamos bajar el de alta calidad y lo reemplazamos sin que el usuario lo note.
-                if (isMobile && connectionQuality === 'low') {
+                // 4. Mejora Progresiva (Opcional, en background sin bloquear)
+                // Cargamos la versión de alta calidad después de que la página ya está visible y fluida.
+                if (connectionQuality === 'high') {
                     window.addEventListener('load', () => {
-                        console.log('📡 Página cargada. Intentando mejorar calidad de video móvil en background...');
-                        // Damos un pequeño margen para no competir con el primer renderizado
                         setTimeout(() => {
-                            fetch('assets/bg-scrub-optimized.mp4')
+                            const hqVideoSrc = isMobile ? 'assets/bg-scrub-optimized.mp4' : 'assets/bg-scrub-desktop.mp4';
+                            fetch(hqVideoSrc)
                                 .then(res => res.blob())
                                 .then(highQualityBlob => {
-                                    console.log('📡 Video móvil HQ descargado. Intercambiando...');
                                     const hqBlobUrl = URL.createObjectURL(highQualityBlob);
-                                    
-                                    // Guardar el estado de reproducción y tiempo actual
                                     const currentTime = scrubVideo.currentTime;
                                     const isPlaying = !scrubVideo.paused;
                                     
-                                    // Intercambiar suavemente
                                     scrubVideo.src = hqBlobUrl;
                                     scrubVideo.currentTime = currentTime;
                                     if (isPlaying) {
                                         scrubVideo.play().catch(e => console.log("Error al reanudar HQ:", e));
                                     }
                                 })
-                                .catch(error => console.error('Error descargando mejora de video:', error));
-                        }, 2000);
+                                .catch(error => console.log('Error descargando mejora de video:', error));
+                        }, 3000);
                     });
                 }
             })
             .catch(error => {
                 console.error('Error precargando el video de fondo:', error);
-                // Fallback de seguridad por si falla el fetch
                 scrubVideo.src = initialBgVideoSrc;
             });
     </script>
