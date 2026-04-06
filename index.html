@@ -740,41 +740,36 @@
         
         console.log(`📡 Cargando video inicial: ${initialBgVideoSrc} | Calidad de red: ${connectionQuality}`);
 
-        // 3. Descargar a RAM
-        fetch(initialBgVideoSrc)
-            .then(response => response.blob())
-            .then(blob => {
-                const videoBlobUrl = URL.createObjectURL(blob);
-                scrubVideo.src = videoBlobUrl;
-                
-                // 4. Mejora Progresiva (Opcional, en background sin bloquear)
-                // Cargamos la versión de alta calidad después de que la página ya está visible y fluida.
-                if (connectionQuality === 'high') {
-                    window.addEventListener('load', () => {
-                        setTimeout(() => {
-                            const hqVideoSrc = isMobile ? 'assets/bg-scrub-optimized.mp4' : 'assets/bg-scrub-desktop.mp4';
-                            fetch(hqVideoSrc)
-                                .then(res => res.blob())
-                                .then(highQualityBlob => {
-                                    const hqBlobUrl = URL.createObjectURL(highQualityBlob);
-                                    const currentTime = scrubVideo.currentTime;
-                                    const isPlaying = !scrubVideo.paused;
-                                    
-                                    scrubVideo.src = hqBlobUrl;
-                                    scrubVideo.currentTime = currentTime;
-                                    if (isPlaying) {
-                                        scrubVideo.play().catch(e => console.log("Error al reanudar HQ:", e));
-                                    }
-                                })
-                                .catch(error => console.log('Error descargando mejora de video:', error));
-                        }, 3000);
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Error precargando el video de fondo:', error);
-                scrubVideo.src = initialBgVideoSrc;
+        // 3. Asignación Directa y Nativa
+        // Al usar .src directamente, evitamos problemas de CORS/Proxy con Fetch
+        // y prevenimos que Safari móvil colapse por falta de memoria RAM.
+        scrubVideo.src = initialBgVideoSrc;
+        scrubVideo.load();
+        
+        // 4. Mejora Progresiva Segura
+        if (connectionQuality === 'high') {
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    const hqVideoSrc = isMobile ? 'assets/bg-scrub-optimized.mp4' : 'assets/bg-scrub-desktop.mp4';
+                    
+                    const tempVideo = document.createElement('video');
+                    tempVideo.preload = 'auto';
+                    tempVideo.src = hqVideoSrc;
+                    
+                    tempVideo.oncanplaythrough = () => {
+                        const currentTime = scrubVideo.currentTime;
+                        const isPlaying = !scrubVideo.paused;
+                        
+                        scrubVideo.src = hqVideoSrc;
+                        scrubVideo.currentTime = currentTime;
+                        if (isPlaying) {
+                            scrubVideo.play().catch(e => console.log("Error al reanudar HQ:", e));
+                        }
+                    };
+                    tempVideo.load();
+                }, 3000);
             });
+        }
     </script>
 
     <!-- Deep sea darkening overlay removed per user request -->
@@ -1028,12 +1023,15 @@
             }
         };
 
-        // Aumentamos el timeout a 15s para dar más margen en conexiones muy lentas o móviles 3G
-        const loaderTimeout = setTimeout(hideLoader, 15000);
+        // Reducimos el timeout a 8s ya que los videos son ligeros ahora y evitamos esperas falsas
+        const loaderTimeout = setTimeout(hideLoader, 8000);
 
         const checkVideosLoaded = () => {
-            // Requerimos HAVE_ENOUGH_DATA (4) para asegurar que el video principal puede reproducirse suavemente
-            const bgLoaded = video.readyState >= 4; 
+            // iOS Safari y otros móviles a menudo PAUSAN el buffering de videos (readyState = 1) 
+            // si el video no está reproduciéndose (autoplay).
+            // Esperar canplaythrough (readyState >= 4) puede causar que la pantalla de carga NUNCA se quite en móvil.
+            // Con HAVE_METADATA (1) o HAVE_CURRENT_DATA (2) ya podemos quitar el loader.
+            const bgLoaded = video.readyState >= 1; 
             
             if (bgLoaded) {
                 clearTimeout(loaderTimeout);
@@ -1041,7 +1039,8 @@
             }
         };
 
-        // Escuchar 'canplaythrough' que garantiza que hay suficiente buffer
+        // Escuchar loadedmetadata para móviles, y canplaythrough como respaldo
+        video.addEventListener('loadedmetadata', checkVideosLoaded);
         video.addEventListener('canplaythrough', checkVideosLoaded);
         
         // Check immediately in case they are already loaded
