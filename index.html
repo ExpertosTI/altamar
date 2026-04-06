@@ -1794,8 +1794,18 @@
         const loginError = document.getElementById('login-error');
         const loginBtn = document.getElementById('login-submit');
 
+        // Rate Limiting del lado del cliente (Anti-Brute Force básico)
+        let failedAttempts = 0;
+        let isLockedOut = false;
+
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
+            
+            if (isLockedOut) {
+                loginError.innerText = 'Demasiados intentos. Espera 1 minuto.';
+                loginError.style.display = 'block';
+                return;
+            }
             
             // Basic input validation & sanitization (trimming)
             const usernameInput = document.getElementById('username');
@@ -1830,12 +1840,28 @@
             .then(data => {
                 if (data.result && data.result.uid) {
                     // Success, redirect to Odoo backend
+                    failedAttempts = 0;
                     window.location.href = '/web';
                 } else {
                     // Failed
+                    failedAttempts++;
+                    if (failedAttempts >= 5) {
+                        isLockedOut = true;
+                        loginError.innerText = 'Acceso bloqueado temporalmente por seguridad. Intenta en 1 minuto.';
+                        loginBtn.innerText = 'Bloqueado';
+                        setTimeout(() => {
+                            isLockedOut = false;
+                            failedAttempts = 0;
+                            loginBtn.innerText = 'Acceder a mi plataforma';
+                            loginBtn.disabled = false;
+                            loginError.style.display = 'none';
+                        }, 60000); // 1 minuto de bloqueo
+                    } else {
+                        loginError.innerText = 'Credenciales incorrectas.';
+                        loginBtn.innerText = 'Entrar';
+                        loginBtn.disabled = false;
+                    }
                     loginError.style.display = 'block';
-                    loginBtn.innerText = 'Entrar';
-                    loginBtn.disabled = false;
                 }
             })
             .catch(err => {
