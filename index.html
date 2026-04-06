@@ -228,6 +228,7 @@
             margin-bottom: 20px;
             animation: float-underwater 8s ease-in-out infinite;
             will-change: transform;
+            pointer-events: auto; /* Permite recibir clicks para el login secreto */
         }
 
         .hero-quote {
@@ -1575,38 +1576,55 @@
         animate();
 
         // -----------------------
-        // Double Tap to Login Logic
+        // Triple Tap to Login Logic (Secret Access via Logo)
         // -----------------------
         const modal = document.getElementById('login-modal');
         const closeModalBtn = document.getElementById('close-modal');
+        const logoTarget = document.querySelector('.hero-logo');
 
         const openModal = () => modal.classList.add('is-open');
         const closeModal = () => modal.classList.remove('is-open');
 
-        let lastTapTime = 0;
-        document.addEventListener('touchend', (e) => {
-            // Ignore if tapping inside the modal itself
-            if (e.target.closest('#login-modal')) return;
+        let tapCount = 0;
+        let tapTimer = null;
+
+        const handleLogoTap = (clientX, clientY, e) => {
+            tapCount++;
             
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTapTime;
-            if (tapLength < 500 && tapLength > 0) {
+            // Generar el efecto de agua (ripple) en cada tap
+            ripples.push(new Ripple(clientX, clientY));
+
+            if (tapCount === 3) {
+                // Si hizo 3 taps rápido, abrimos modal
+                clearTimeout(tapTimer);
+                tapCount = 0;
+                setTimeout(openModal, 150);
+                if (e && e.cancelable) e.preventDefault();
+            } else {
+                // Si no llega a 3, resetear el contador después de 600ms
+                clearTimeout(tapTimer);
+                tapTimer = setTimeout(() => {
+                    tapCount = 0;
+                }, 800); // 800ms de ventana para completar los 3 toques
+            }
+        };
+
+        if (logoTarget) {
+            // Evitar que un click normal dispare cosas raras si estamos en touch
+            let lastTouchTime = 0;
+            logoTarget.addEventListener('touchend', (e) => {
+                lastTouchTime = Date.now();
                 const clientX = e.changedTouches ? e.changedTouches[0].clientX : window.innerWidth / 2;
                 const clientY = e.changedTouches ? e.changedTouches[0].clientY : window.innerHeight / 2;
-                ripples.push(new Ripple(clientX, clientY));
-                setTimeout(openModal, 150);
-                e.preventDefault();
-            }
-            lastTapTime = currentTime;
-        }, { passive: false });
+                handleLogoTap(clientX, clientY, e);
+            }, { passive: false });
 
-        document.addEventListener('dblclick', (e) => {
-            if (e.target.closest('#login-modal')) return;
-            const clientX = e.clientX || window.innerWidth / 2;
-            const clientY = e.clientY || window.innerHeight / 2;
-            ripples.push(new Ripple(clientX, clientY));
-            setTimeout(openModal, 150);
-        });
+            logoTarget.addEventListener('click', (e) => {
+                // Prevenir que el click se dispare inmediatamente después de un touchend
+                if (Date.now() - lastTouchTime < 300) return;
+                handleLogoTap(e.clientX, e.clientY, e);
+            });
+        }
 
         closeModalBtn.addEventListener('click', closeModal);
 
