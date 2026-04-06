@@ -709,18 +709,13 @@
         const scrubVideo = document.getElementById('intro-scrub-video');
         const isMobile = window.innerWidth <= 768;
         
-        // 1. Detectar hardware/red
+        // 1. Detectar hardware/red de forma segura (sin invocar APIs de fingerprinting que asustan a iOS)
         let connectionQuality = 'high'; 
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         
-        if (isMobile && !isIOS) {
-            const isLowEndHardware = (navigator.deviceMemory && navigator.deviceMemory <= 4) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
-            if (navigator.connection) {
-                if (navigator.connection.downlink < 1.0 || isLowEndHardware) connectionQuality = 'low';
-            } else if (isLowEndHardware) {
-                connectionQuality = 'low';
-            }
-        }
+        // En lugar de usar navigator.deviceMemory o connection que causan alertas de privacidad en iOS,
+        // asumimos 'high' por defecto, y solo bajamos a 'low' si falla la carga del HD.
+        // Esto mantiene felices a los bloqueadores de rastreo de Apple.
 
         // 2. Definir Capas de Renderizado (Progressive Enhancement)
         // Capa 0: Micro-video 108KB (Carga instantánea < 1s garantizada)
@@ -813,7 +808,7 @@
                         </div>
                         <div class="ig-overlay">
                             <p style="color: var(--accent-gold); font-weight: bold; font-size: 1.5rem; margin-bottom: 15px; text-shadow: 0 2px 5px rgba(0,0,0,0.8);">Capitanes Grandes</p>
-                            <a href="https://wa.me/1234567890?text=Hola,%20quiero%20ordenar:%20Capitanes%20Grandes" target="_blank" rel="noopener noreferrer" style="background: var(--accent-gold); color: #000; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: transform 0.2s; display: inline-block;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Ordenar Ahora</a>
+                            <a href="https://wa.me/18294781652?text=Hola,%20quiero%20ordenar:%20Capitanes%20Grandes" target="_blank" rel="noopener noreferrer" style="background: var(--accent-gold); color: #000; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: transform 0.2s; display: inline-block;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Ordenar Ahora</a>
                         </div>
                     </div>
 
@@ -826,7 +821,7 @@
                         </div>
                         <div class="ig-overlay">
                             <p style="color: var(--accent-gold); font-weight: bold; font-size: 1.5rem; margin-bottom: 15px; text-shadow: 0 2px 5px rgba(0,0,0,0.8);">Combo Feria</p>
-                            <a href="https://wa.me/1234567890?text=Hola,%20quiero%20ordenar:%20Combo%20Feria" target="_blank" rel="noopener noreferrer" style="background: var(--accent-gold); color: #000; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: transform 0.2s; display: inline-block;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Ordenar Ahora</a>
+                            <a href="https://wa.me/18294781652?text=Hola,%20quiero%20ordenar:%20Combo%20Feria" target="_blank" rel="noopener noreferrer" style="background: var(--accent-gold); color: #000; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: transform 0.2s; display: inline-block;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Ordenar Ahora</a>
                         </div>
                     </div>
 
@@ -839,7 +834,7 @@
                         </div>
                         <div class="ig-overlay">
                             <p style="color: var(--accent-gold); font-weight: bold; font-size: 1.5rem; margin-bottom: 15px; text-shadow: 0 2px 5px rgba(0,0,0,0.8);">Camarón Sánchez</p>
-                            <a href="https://wa.me/1234567890?text=Hola,%20quiero%20ordenar:%20Camarón%20Sánchez" target="_blank" rel="noopener noreferrer" style="background: var(--accent-gold); color: #000; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: transform 0.2s; display: inline-block;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Ordenar Ahora</a>
+                            <a href="https://wa.me/18294781652?text=Hola,%20quiero%20ordenar:%20Camarón%20Sánchez" target="_blank" rel="noopener noreferrer" style="background: var(--accent-gold); color: #000; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: transform 0.2s; display: inline-block;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Ordenar Ahora</a>
                         </div>
                     </div>
 
@@ -852,7 +847,7 @@
                         </div>
                         <div class="ig-overlay">
                             <p style="color: var(--accent-gold); font-weight: bold; font-size: 1.5rem; margin-bottom: 15px; text-shadow: 0 2px 5px rgba(0,0,0,0.8);">Doradas Frescas</p>
-                            <a href="https://wa.me/1234567890?text=Hola,%20quiero%20ordenar:%20Doradas%20Frescas" target="_blank" rel="noopener noreferrer" style="background: var(--accent-gold); color: #000; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: transform 0.2s; display: inline-block;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Ordenar Ahora</a>
+                            <a href="https://wa.me/18294781652?text=Hola,%20quiero%20ordenar:%20Doradas%20Frescas" target="_blank" rel="noopener noreferrer" style="background: var(--accent-gold); color: #000; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: transform 0.2s; display: inline-block;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Ordenar Ahora</a>
                         </div>
                     </div>
 
@@ -865,7 +860,7 @@
                         </div>
                         <div class="ig-overlay">
                             <p style="color: var(--accent-gold); font-weight: bold; font-size: 1.5rem; margin-bottom: 15px; text-shadow: 0 2px 5px rgba(0,0,0,0.8);">Pescados Grandes</p>
-                            <a href="https://wa.me/1234567890?text=Hola,%20quiero%20ordenar:%20Pescados%20Grandes" target="_blank" rel="noopener noreferrer" style="background: var(--accent-gold); color: #000; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: transform 0.2s; display: inline-block;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Ordenar Ahora</a>
+                            <a href="https://wa.me/18294781652?text=Hola,%20quiero%20ordenar:%20Pescados%20Grandes" target="_blank" rel="noopener noreferrer" style="background: var(--accent-gold); color: #000; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: transform 0.2s; display: inline-block;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Ordenar Ahora</a>
                         </div>
                     </div>
 
@@ -878,7 +873,7 @@
                         </div>
                         <div class="ig-overlay">
                             <p style="color: var(--accent-gold); font-weight: bold; font-size: 1.5rem; margin-bottom: 15px; text-shadow: 0 2px 5px rgba(0,0,0,0.8);">Atún en Vivo</p>
-                            <a href="https://wa.me/1234567890?text=Hola,%20quiero%20ordenar:%20Atún%20en%20Vivo" target="_blank" rel="noopener noreferrer" style="background: var(--accent-gold); color: #000; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: transform 0.2s; display: inline-block;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Ordenar Ahora</a>
+                            <a href="https://wa.me/18294781652?text=Hola,%20quiero%20ordenar:%20Atún%20en%20Vivo" target="_blank" rel="noopener noreferrer" style="background: var(--accent-gold); color: #000; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: transform 0.2s; display: inline-block;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Ordenar Ahora</a>
                         </div>
                     </div>
                 </div>
@@ -886,7 +881,7 @@
                 <div class="cta-container">
                     <p style="margin-bottom: 25px; font-size: 1.2rem; font-weight: 600; color: var(--text-main); text-shadow: 0 2px 10px rgba(0,0,0,0.8);">¿Listo para disfrutar de la frescura del mar?</p>
                     <div class="cta-links">
-                        <a href="https://wa.me/1234567890?text=Hola,%20quiero%20aprovechar%20las%20ofertas%20del%20día" target="_blank" rel="noopener noreferrer" style="background: #25D366; color: white; text-decoration: none; padding: 15px 35px; border-radius: 50px; font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
+                        <a href="https://wa.me/18294781652?text=Hola,%20quiero%20aprovechar%20las%20ofertas%20del%20día" target="_blank" rel="noopener noreferrer" style="background: #25D366; color: white; text-decoration: none; padding: 15px 35px; border-radius: 50px; font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
                             <i data-lucide="message-circle" style="width: 24px; height: 24px;"></i>
                             Pedir por WhatsApp
                         </a>
@@ -896,7 +891,7 @@
                                 <svg xmlns="http://www.svg.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-instagram" style="width: 24px; height: 24px;"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
                                 @pescaderia__altamar
                             </a>
-                            <a href="tel:+1234567890" style="color: var(--text-main); transition: color 0.3s; display: flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 500; text-shadow: 0 2px 5px rgba(0,0,0,0.8);" onmouseover="this.style.color='var(--accent-gold)';" onmouseout="this.style.color='var(--text-main)';">
+                            <a href="tel:+18294781652" style="color: var(--text-main); transition: color 0.3s; display: flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 500; text-shadow: 0 2px 5px rgba(0,0,0,0.8);" onmouseover="this.style.color='var(--accent-gold)';" onmouseout="this.style.color='var(--text-main)';">
                                 <i data-lucide="phone" style="width: 24px; height: 24px;"></i>
                                 Llámanos
                             </a>
@@ -906,6 +901,14 @@
             </div>
         </section>
     </main>
+
+    <!-- Context Menu Personalizado (Secret Login) -->
+    <div id="custom-context-menu" style="display: none; position: fixed; z-index: 99999; background: rgba(0, 15, 30, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(0, 200, 255, 0.2); border-radius: 8px; padding: 5px 0; min-width: 150px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+        <div id="context-login-btn" style="padding: 10px 20px; color: var(--accent-teal); font-family: 'Space Grotesk', sans-serif; font-weight: bold; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="key" style="width: 16px; height: 16px;"></i>
+            ACCESO
+        </div>
+    </div>
 
     <!-- Login Modal (Renace Tech) -->
     <div class="login-modal" id="login-modal">
@@ -1577,7 +1580,8 @@
             // Más profundidad = más burbujas base (simula escapes de aire en el fondo)
             const scrollMaxAnim = document.documentElement.scrollHeight - window.innerHeight;
             const depthFactor = scrollMaxAnim > 0 ? Math.max(0, Math.min(currentScroll / scrollMaxAnim, 1)) : 0;
-            const baseRatio = 0.35 + (depthFactor * 0.45); // 35% arriba, 80% abajo (incluso en pausa)
+            // Aumentado significativamente el ratio base para que se noten mucho más en modo estático
+            const baseRatio = 0.70 + (depthFactor * 0.30); // 70% arriba, 100% abajo (incluso en pausa)
             
             // Base bubbles when paused, up to 100% when scrolling fast
             const activeRatio = baseRatio + Math.min(window.smoothedScrollDelta / 12, 1) * (1 - baseRatio); 
@@ -1610,58 +1614,70 @@
             requestAnimationFrame(animate);
         };
 
+        // Interacción táctil/ratón con el agua (Ripples interactivos)
+        let lastRippleTime = 0;
+        window.addEventListener('pointermove', (e) => {
+            const now = Date.now();
+            if (now - lastRippleTime > 150) { // Limitador para no saturar
+                ripples.push(new Ripple(e.clientX, e.clientY));
+                lastRippleTime = now;
+            }
+        });
+
         animate();
 
         // -----------------------
-        // Triple Tap to Login Logic (Secret Access via Logo)
+        // Secret Context Menu Logic (Click Derecho / 2 Dedos)
         // -----------------------
         const modal = document.getElementById('login-modal');
         const closeModalBtn = document.getElementById('close-modal');
-        const logoTarget = document.querySelector('.hero-logo');
+        const customMenu = document.getElementById('custom-context-menu');
+        const contextLoginBtn = document.getElementById('context-login-btn');
 
-        const openModal = () => modal.classList.add('is-open');
+        const openModal = () => {
+            modal.classList.add('is-open');
+            customMenu.style.display = 'none';
+        };
         const closeModal = () => modal.classList.remove('is-open');
 
-        let tapCount = 0;
-        let tapTimer = null;
-
-        const handleLogoTap = (clientX, clientY, e) => {
-            tapCount++;
+        // Evitar el menú por defecto en toda la pantalla y mostrar el nuestro
+        window.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
             
-            // Generar el efecto de agua (ripple) en cada tap
-            ripples.push(new Ripple(clientX, clientY));
+            // Posicionar el menú donde se hizo click/tap
+            const menuWidth = 150;
+            const menuHeight = 50;
+            
+            let posX = e.clientX;
+            let posY = e.clientY;
+            
+            // Ajustar si se sale de la pantalla
+            if (posX + menuWidth > window.innerWidth) posX = window.innerWidth - menuWidth - 10;
+            if (posY + menuHeight > window.innerHeight) posY = window.innerHeight - menuHeight - 10;
+            
+            customMenu.style.left = `${posX}px`;
+            customMenu.style.top = `${posY}px`;
+            customMenu.style.display = 'block';
+        });
 
-            if (tapCount === 3) {
-                // Si hizo 3 taps rápido, abrimos modal
-                clearTimeout(tapTimer);
-                tapCount = 0;
-                setTimeout(openModal, 150);
-                if (e && e.cancelable) e.preventDefault();
-            } else {
-                // Si no llega a 3, resetear el contador después de 600ms
-                clearTimeout(tapTimer);
-                tapTimer = setTimeout(() => {
-                    tapCount = 0;
-                }, 800); // 800ms de ventana para completar los 3 toques
+        // Ocultar el menú si hace click o scroll en cualquier otro lado
+        window.addEventListener('click', (e) => {
+            if (e.target !== contextLoginBtn && !contextLoginBtn.contains(e.target)) {
+                customMenu.style.display = 'none';
             }
-        };
+        });
+        window.addEventListener('scroll', () => { customMenu.style.display = 'none'; }, {passive: true});
 
-        if (logoTarget) {
-            // Evitar que un click normal dispare cosas raras si estamos en touch
-            let lastTouchTime = 0;
-            logoTarget.addEventListener('touchend', (e) => {
-                lastTouchTime = Date.now();
-                const clientX = e.changedTouches ? e.changedTouches[0].clientX : window.innerWidth / 2;
-                const clientY = e.changedTouches ? e.changedTouches[0].clientY : window.innerHeight / 2;
-                handleLogoTap(clientX, clientY, e);
-            }, { passive: false });
+        // Abrir login al clickear ACCESO
+        contextLoginBtn.addEventListener('click', openModal);
 
-            logoTarget.addEventListener('click', (e) => {
-                // Prevenir que el click se dispare inmediatamente después de un touchend
-                if (Date.now() - lastTouchTime < 300) return;
-                handleLogoTap(e.clientX, e.clientY, e);
-            });
-        }
+        // Hover effect for context menu
+        contextLoginBtn.addEventListener('mouseenter', () => {
+            contextLoginBtn.style.background = 'rgba(45, 212, 191, 0.1)';
+        });
+        contextLoginBtn.addEventListener('mouseleave', () => {
+            contextLoginBtn.style.background = 'transparent';
+        });
 
         closeModalBtn.addEventListener('click', closeModal);
 
