@@ -705,26 +705,41 @@
         const scrubVideo = document.getElementById('intro-scrub-video');
         const isMobile = window.innerWidth <= 768;
         
-        // 1. Asignar el video inicial
-        // Escritorio SIEMPRE descarga la mejor calidad (Desktop), obligatoriamente.
-        // Móvil SIEMPRE descarga primero el de super baja calidad (Low) para inmediatez.
-        const initialBgVideoSrc = isMobile ? 'assets/bg-scrub-low.mp4' : 'assets/bg-scrub-desktop.mp4';
-        
-        console.log(`📡 Cargando video inicial: ${initialBgVideoSrc}`);
+        // 1. Detectar la calidad de red del usuario (Sensación Premium vs Salvavidas)
+        let connectionQuality = 'high'; // Por defecto asumimos buena conexión
+        if (navigator.connection) {
+            const conn = navigator.connection;
+            // Si el usuario tiene ahorro de datos, o está en 2G/3G, o su velocidad de bajada es muy lenta (< 2 Mbps)
+            if (conn.saveData || conn.effectiveType === '2g' || conn.effectiveType === '3g' || conn.downlink < 2.0) {
+                connectionQuality = 'low';
+            }
+        }
 
-        // 2. Descargar a RAM
+        // 2. Asignar el video inicial
+        // Escritorio SIEMPRE descarga la mejor calidad (Desktop).
+        // Móvil evaluará la red: si es lenta carga el "Low", si es rápida carga el "Optimized" de una vez (Sensación Premium).
+        let initialBgVideoSrc;
+        if (!isMobile) {
+            initialBgVideoSrc = 'assets/bg-scrub-desktop.mp4';
+        } else {
+            initialBgVideoSrc = connectionQuality === 'low' ? 'assets/bg-scrub-low.mp4' : 'assets/bg-scrub-optimized.mp4';
+        }
+        
+        console.log(`📡 Cargando video inicial: ${initialBgVideoSrc} | Calidad de red: ${connectionQuality}`);
+
+        // 3. Descargar a RAM
         fetch(initialBgVideoSrc)
             .then(response => response.blob())
             .then(blob => {
                 const videoBlobUrl = URL.createObjectURL(blob);
                 scrubVideo.src = videoBlobUrl;
                 
-                // 3. Mejora Progresiva para Móvil
+                // 4. Mejora Progresiva para Móvil (Solo si cargamos el de baja calidad por red lenta)
                 // Una vez que todos los elementos se descarguen (evento load),
-                // bajamos el de alta calidad (Optimized) y lo reemplazamos sin que el usuario lo note.
-                if (isMobile) {
+                // intentamos bajar el de alta calidad y lo reemplazamos sin que el usuario lo note.
+                if (isMobile && connectionQuality === 'low') {
                     window.addEventListener('load', () => {
-                        console.log('📡 Página cargada. Descargando video de alta calidad para móvil...');
+                        console.log('📡 Página cargada. Intentando mejorar calidad de video móvil en background...');
                         // Damos un pequeño margen para no competir con el primer renderizado
                         setTimeout(() => {
                             fetch('assets/bg-scrub-optimized.mp4')
