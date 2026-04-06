@@ -701,11 +701,34 @@
     </video>
     <script>
         // Técnica profesional para videos de "Scrubbing": Descargarlo entero como Blob.
-        // Esto elimina por completo las peticiones repetidas (206 Partial Content) 
-        // y garantiza que el scroll sea 100% fluido porque el video está en la RAM.
+        // Esto elimina por completo las peticiones repetidas (206 Partial Content).
         const scrubVideo = document.getElementById('intro-scrub-video');
-        const bgVideoSrc = window.innerWidth <= 768 ? 'assets/bg-scrub-optimized.mp4' : 'assets/bg-scrub-desktop.mp4';
+        const isMobile = window.innerWidth <= 768;
         
+        // 1. Detectar la calidad de red del usuario (Adaptativo estilo YouTube)
+        let connectionQuality = 'high'; // Por defecto asumimos buena conexión
+        
+        if (navigator.connection) {
+            const conn = navigator.connection;
+            // Si el usuario tiene ahorro de datos, o está en 2G/3G, o su velocidad de bajada es muy lenta (< 2 Mbps)
+            if (conn.saveData || conn.effectiveType === '2g' || conn.effectiveType === '3g' || conn.downlink < 2.0) {
+                connectionQuality = 'low';
+            }
+        }
+
+        // 2. Asignar el video correcto según dispositivo Y conexión
+        let bgVideoSrc;
+        if (isMobile) {
+            // Móvil Lento: 480p (480 KB) | Móvil Rápido: 720p Optimizado (2.4 MB)
+            bgVideoSrc = connectionQuality === 'low' ? 'assets/bg-scrub-low.mp4' : 'assets/bg-scrub-optimized.mp4';
+        } else {
+            // Escritorio Lento: 720p Optimizado (2.4 MB) | Escritorio Rápido: 1080p Original (13 MB)
+            bgVideoSrc = connectionQuality === 'low' ? 'assets/bg-scrub-optimized.mp4' : 'assets/bg-scrub-desktop.mp4';
+        }
+        
+        console.log(`📡 Calidad de red detectada: ${connectionQuality} | Cargando: ${bgVideoSrc}`);
+
+        // 3. Descargar a RAM
         fetch(bgVideoSrc)
             .then(response => response.blob())
             .then(blob => {
