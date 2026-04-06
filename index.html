@@ -701,76 +701,77 @@
     <video id="intro-scrub-video" poster="assets/bg-poster.jpg" muted playsinline preload="auto" class="bg-video" style="transform-origin: center center; width: 100vw; height: 100vh; object-fit: cover;">
     </video>
     <script>
-        // Técnica profesional para videos de "Scrubbing": Descargarlo entero como Blob.
-        // Esto elimina por completo las peticiones repetidas (206 Partial Content).
+        // Capas de Renderizado (Clean Architecture para CDNs)
+        // Técnica profesional: Descargar videos como Blob mediante fetch().
+        // Esto fuerza una petición HTTP 200 OK completa en lugar de múltiples 206 Partial Content,
+        // permitiendo que Cloudflare o Traefik cacheen el archivo al 100% y lo sirvan de inmediato.
+        
         const scrubVideo = document.getElementById('intro-scrub-video');
         const isMobile = window.innerWidth <= 768;
         
-        // 1. Detectar la calidad de red y dispositivo del usuario (Sensación Premium)
-        // Priorizamos la MEJOR experiencia. iPhones y gama alta nunca ven el de baja calidad.
-        let connectionQuality = 'high'; // Por defecto asumimos buena conexión
+        // 1. Detectar hardware/red
+        let connectionQuality = 'high'; 
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         
-        // Solo aplicamos degradación si es móvil y NO es un dispositivo iOS (Apple)
         if (isMobile && !isIOS) {
-            // Detectar si es un Android de gama baja (<= 4GB RAM o <= 4 núcleos)
             const isLowEndHardware = (navigator.deviceMemory && navigator.deviceMemory <= 4) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
-            
             if (navigator.connection) {
-                const conn = navigator.connection;
-                // Bajar calidad solo si la red es muy inestable (< 1 Mbps) o el teléfono es gama baja
-                if (conn.downlink < 1.0 || isLowEndHardware) {
-                    connectionQuality = 'low';
-                }
+                if (navigator.connection.downlink < 1.0 || isLowEndHardware) connectionQuality = 'low';
             } else if (isLowEndHardware) {
-                // Fallback si no hay API de red pero sabemos que el hardware es limitado
                 connectionQuality = 'low';
             }
         }
 
-        // 2. Asignar el video inicial
-        // Usamos las versiones ULTRA comprimidas para carga inmediata.
-        // Escritorio: 720p super comprimido (1 MB)
-        // Móvil: 480p super comprimido (500 KB)
-        let initialBgVideoSrc;
-        if (!isMobile) {
-            initialBgVideoSrc = 'assets/bg-scrub-720p-low.mp4';
-        } else {
-            initialBgVideoSrc = 'assets/bg-scrub-480p.mp4';
-        }
+        // 2. Definir Capas de Renderizado
+        const layer1Src = 'assets/bg-scrub-480p.mp4'; // ~500KB - Carga Ultra Rápida
+        let layer2Src = isMobile ? 'assets/bg-scrub-optimized.mp4' : 'assets/bg-scrub-desktop.mp4'; // HD
         
-        console.log(`📡 Cargando video inicial: ${initialBgVideoSrc} | Calidad de red: ${connectionQuality}`);
+        if (connectionQuality === 'low') {
+            layer2Src = layer1Src; // En red lenta, la capa HD es la misma que la ligera
+        }
 
-        // 3. Asignación Directa y Nativa
-        // Al usar .src directamente, evitamos problemas de CORS/Proxy con Fetch
-        // y prevenimos que Safari móvil colapse por falta de memoria RAM.
-        scrubVideo.src = initialBgVideoSrc;
-        scrubVideo.load();
+        // Función para cargar capa a través de Fetch (CDN Friendly)
+        const loadVideoLayer = async (src, isInitialLayer) => {
+            try {
+                // Fetch permite al CDN interceptar y servir de caché (200 OK)
+                const response = await fetch(src);
+                if (!response.ok) throw new Error('CDN/Network error');
+                
+                const blob = await response.blob();
+                const videoUrl = URL.createObjectURL(blob);
+                
+                const currentTime = scrubVideo.currentTime;
+                scrubVideo.src = videoUrl;
+                
+                if (!isInitialLayer) {
+                    scrubVideo.currentTime = currentTime; // Smooth swap
+                }
+                
+                return true;
+            } catch (error) {
+                console.error(`Fallback a nativo para ${src}:`, error);
+                // Si fetch falla (CORS, etc.), fallback nativo
+                if (isInitialLayer) scrubVideo.src = src;
+                return false;
+            }
+        };
+
+        // Ejecutar Capas
+        console.log(`[CDN Arch] Iniciando Capa 1: ${layer1Src}`);
         
-        // 4. Mejora Progresiva Segura
-        if (connectionQuality === 'high') {
-            window.addEventListener('load', () => {
+        loadVideoLayer(layer1Src, true).then(success => {
+            if (success && layer1Src !== layer2Src) {
+                // Una vez que la Capa 1 está en RAM, el usuario ya puede usar la web rápido.
+                // Empezamos la Capa 2 (HD) en silencio.
+                console.log(`[CDN Arch] Capa 1 lista. Descargando Capa 2 (HD): ${layer2Src}`);
+                
                 setTimeout(() => {
-                    const hqVideoSrc = isMobile ? 'assets/bg-scrub-optimized.mp4' : 'assets/bg-scrub-desktop.mp4';
-                    
-                    const tempVideo = document.createElement('video');
-                    tempVideo.preload = 'auto';
-                    tempVideo.src = hqVideoSrc;
-                    
-                    tempVideo.oncanplaythrough = () => {
-                        const currentTime = scrubVideo.currentTime;
-                        const isPlaying = !scrubVideo.paused;
-                        
-                        scrubVideo.src = hqVideoSrc;
-                        scrubVideo.currentTime = currentTime;
-                        if (isPlaying) {
-                            scrubVideo.play().catch(e => console.log("Error al reanudar HQ:", e));
-                        }
-                    };
-                    tempVideo.load();
-                }, 3000);
-            });
-        }
+                    loadVideoLayer(layer2Src, false).then(hdSuccess => {
+                        if (hdSuccess) console.log("[CDN Arch] Swap a HD completado con éxito.");
+                    });
+                }, 1500); // Pausa para no competir con JS/CSS críticos
+            }
+        });
     </script>
 
     <!-- Deep sea darkening overlay removed per user request -->
