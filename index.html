@@ -806,7 +806,7 @@
                 <div class="ig-grid">
                     <!-- Post 1 -->
                     <div class="ig-post">
-                        <video class="lazy-video" loop muted playsinline preload="none" data-poster="assets/opt-capitanes.jpg" data-src="assets/opt-capitanes-low.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
+                        <video class="lazy-video" loop muted playsinline preload="none" data-poster="assets/opt-capitanes.jpg" data-src="assets/opt-capitanes-low.mp4" data-src-hq="assets/opt-capitanes.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
                         <div style="position: absolute; inset: 0; background: rgba(0,20,40,0.2);"></div>
                         <div style="position: absolute; top: 10px; right: 10px; opacity: 0.8; color: #fff;">
                             <i data-lucide="video" style="width: 20px; height: 20px;"></i>
@@ -819,7 +819,7 @@
 
                     <!-- Post 2 -->
                     <div class="ig-post">
-                        <video class="lazy-video" loop muted playsinline preload="none" data-poster="assets/opt-combo.jpg" data-src="assets/opt-combo-low.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
+                        <video class="lazy-video" loop muted playsinline preload="none" data-poster="assets/opt-combo.jpg" data-src="assets/opt-combo-low.mp4" data-src-hq="assets/opt-combo.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
                         <div style="position: absolute; inset: 0; background: rgba(0,20,40,0.2);"></div>
                         <div style="position: absolute; top: 10px; right: 10px; opacity: 0.8; color: #fff;">
                             <i data-lucide="video" style="width: 20px; height: 20px;"></i>
@@ -832,7 +832,7 @@
 
                     <!-- Post 3 -->
                     <div class="ig-post">
-                        <video class="lazy-video" loop muted playsinline preload="none" data-poster="assets/opt-camaron.jpg" data-src="assets/opt-camaron-low.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
+                        <video class="lazy-video" loop muted playsinline preload="none" data-poster="assets/opt-camaron.jpg" data-src="assets/opt-camaron-low.mp4" data-src-hq="assets/opt-camaron.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
                         <div style="position: absolute; inset: 0; background: rgba(0,20,40,0.2);"></div>
                         <div style="position: absolute; top: 10px; right: 10px; opacity: 0.8; color: #fff;">
                             <i data-lucide="video" style="width: 20px; height: 20px;"></i>
@@ -845,7 +845,7 @@
 
                     <!-- Post 4 -->
                     <div class="ig-post">
-                        <video class="lazy-video" loop muted playsinline preload="none" data-poster="assets/opt-doradas.jpg" data-src="assets/opt-doradas-low.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
+                        <video class="lazy-video" loop muted playsinline preload="none" data-poster="assets/opt-doradas.jpg" data-src="assets/opt-doradas-low.mp4" data-src-hq="assets/opt-doradas.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
                         <div style="position: absolute; inset: 0; background: rgba(0,20,40,0.2);"></div>
                         <div style="position: absolute; top: 10px; right: 10px; opacity: 0.8; color: #fff;">
                             <i data-lucide="video" style="width: 20px; height: 20px;"></i>
@@ -858,7 +858,7 @@
 
                     <!-- Post 5 (Desktop Only) -->
                     <div class="ig-post desktop-only">
-                        <video class="lazy-video" loop muted playsinline preload="none" data-poster="assets/opt-pescados.jpg" data-src="assets/opt-pescados-low.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
+                        <video class="lazy-video" loop muted playsinline preload="none" data-poster="assets/opt-pescados.jpg" data-src="assets/opt-pescados-low.mp4" data-src-hq="assets/opt-pescados.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
                         <div style="position: absolute; inset: 0; background: rgba(0,20,40,0.2);"></div>
                         <div style="position: absolute; top: 10px; right: 10px; opacity: 0.8; color: #fff;">
                             <i data-lucide="video" style="width: 20px; height: 20px;"></i>
@@ -871,7 +871,7 @@
 
                     <!-- Post 6 (Desktop Only) -->
                     <div class="ig-post desktop-only">
-                        <video class="lazy-video" loop muted playsinline preload="none" data-poster="assets/opt-cliente.jpg" data-src="assets/opt-cliente-low.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
+                        <video class="lazy-video" loop muted playsinline preload="none" data-poster="assets/opt-cliente.jpg" data-src="assets/opt-cliente-low.mp4" data-src-hq="assets/opt-cliente.mp4" style="width: 100%; height: 100%; object-fit: cover;"></video>
                         <div style="position: absolute; inset: 0; background: rgba(0,20,40,0.2);"></div>
                         <div style="position: absolute; top: 10px; right: 10px; opacity: 0.8; color: #fff;">
                             <i data-lucide="video" style="width: 20px; height: 20px;"></i>
@@ -1491,10 +1491,26 @@
                         const lazyVideos = section.querySelectorAll('.lazy-video');
                         lazyVideos.forEach(videoEl => {
                             const src = videoEl.getAttribute('data-src');
+                            const srcHq = videoEl.getAttribute('data-src-hq');
+
                             if (src && !videoEl.src) {
-                                videoEl.src = src;
+                                videoEl.src = src; // Carga instantánea del video ultra comprimido
                                 videoEl.load();
                                 videoEl.play().catch(()=>{});
+
+                                // Fetch en background de la versión HQ para un swap mágico
+                                if (connectionQuality === 'high' && srcHq && !videoEl.dataset.fetchingHq) {
+                                    videoEl.dataset.fetchingHq = "true";
+                                    fetch(srcHq)
+                                        .then(r => r.blob())
+                                        .then(blob => {
+                                            const currentTime = videoEl.currentTime;
+                                            videoEl.src = URL.createObjectURL(blob);
+                                            videoEl.currentTime = currentTime;
+                                            videoEl.play().catch(()=>{});
+                                            console.log(`[CDN Arch] Swap a HQ completado para oferta: ${srcHq}`);
+                                        }).catch(e => console.error('HQ swap error:', e));
+                                }
                             } else if (videoEl.src && videoEl.paused) {
                                 videoEl.play().catch(()=>{});
                             }
@@ -1520,10 +1536,26 @@
                         const lazyVideos = section.querySelectorAll('.lazy-video');
                         lazyVideos.forEach(videoEl => {
                             const src = videoEl.getAttribute('data-src');
+                            const srcHq = videoEl.getAttribute('data-src-hq');
+
                             if (src && !videoEl.src) {
-                                videoEl.src = src;
+                                videoEl.src = src; // Carga instantánea del video ultra comprimido
                                 videoEl.load();
                                 videoEl.play().catch(()=>{});
+
+                                // Fetch en background de la versión HQ para un swap mágico
+                                if (connectionQuality === 'high' && srcHq && !videoEl.dataset.fetchingHq) {
+                                    videoEl.dataset.fetchingHq = "true";
+                                    fetch(srcHq)
+                                        .then(r => r.blob())
+                                        .then(blob => {
+                                            const currentTime = videoEl.currentTime;
+                                            videoEl.src = URL.createObjectURL(blob);
+                                            videoEl.currentTime = currentTime;
+                                            videoEl.play().catch(()=>{});
+                                            console.log(`[CDN Arch] Swap a HQ completado para oferta: ${srcHq}`);
+                                        }).catch(e => console.error('HQ swap error:', e));
+                                }
                             } else if (videoEl.src && videoEl.paused) {
                                 videoEl.play().catch(()=>{});
                             }
