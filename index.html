@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Pescadería Altamar 🐟 | El Papa De Los Mariscos</title>
-    <meta name="description" content="Pescadería Altamar - El Papa De Los Mariscos 🤴🏻. Mariscos y pescados frescos. Ubicados en Calle Duarte esq La Vega, Los Alcarrizos, Santo Domingo, República Dominicana. Contáctanos al Ws 829-478-1652.">
-    <meta name="keywords" content="pescaderia, altamar, mariscos, pescados, los alcarrizos, santo domingo, el papa de los mariscos, pirata del caribe">
+    <meta name="description" content="Pescadería Altamar - El Papa De Los Mariscos 🤴🏻. Mariscos y pescados frescos. Envíos en tiempo real a Todo Santo Domingo. Ubicados en Calle Duarte esq La Vega, Los Alcarrizos, República Dominicana. Contáctanos al Ws 829-478-1652.">
+    <meta name="keywords" content="pescaderia, altamar, mariscos, pescados, envio todo santo domingo, los alcarrizos, el papa de los mariscos, pirata del caribe">
     <meta property="og:title" content="Pescadería Altamar 🐟 | El Papa De Los Mariscos">
-    <meta property="og:description" content="Pescadería Altamar - El Papa De Los Mariscos 🤴🏻. Mariscos y pescados frescos en Los Alcarrizos, Santo Domingo.">
+    <meta property="og:description" content="Pescadería Altamar - El Papa De Los Mariscos 🤴🏻. Mariscos y pescados frescos. Envíos en tiempo real a Todo Santo Domingo.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://altamar.renace.tech">
     <meta name="twitter:card" content="summary_large_image">
@@ -705,40 +705,54 @@
         const scrubVideo = document.getElementById('intro-scrub-video');
         const isMobile = window.innerWidth <= 768;
         
-        // 1. Detectar la calidad de red del usuario (Adaptativo estilo YouTube)
-        let connectionQuality = 'high'; // Por defecto asumimos buena conexión
+        // 1. Asignar el video inicial
+        // Escritorio SIEMPRE descarga la mejor calidad (Desktop), obligatoriamente.
+        // Móvil SIEMPRE descarga primero el de super baja calidad (Low) para inmediatez.
+        const initialBgVideoSrc = isMobile ? 'assets/bg-scrub-low.mp4' : 'assets/bg-scrub-desktop.mp4';
         
-        if (navigator.connection) {
-            const conn = navigator.connection;
-            // Si el usuario tiene ahorro de datos, o está en 2G/3G, o su velocidad de bajada es muy lenta (< 2 Mbps)
-            if (conn.saveData || conn.effectiveType === '2g' || conn.effectiveType === '3g' || conn.downlink < 2.0) {
-                connectionQuality = 'low';
-            }
-        }
+        console.log(`📡 Cargando video inicial: ${initialBgVideoSrc}`);
 
-        // 2. Asignar el video correcto según dispositivo Y conexión
-        let bgVideoSrc;
-        if (isMobile) {
-            // Móvil Lento: 480p (480 KB) | Móvil Rápido: 720p Optimizado (2.4 MB)
-            bgVideoSrc = connectionQuality === 'low' ? 'assets/bg-scrub-low.mp4' : 'assets/bg-scrub-optimized.mp4';
-        } else {
-            // Escritorio Lento: 720p Optimizado (2.4 MB) | Escritorio Rápido: 1080p Original (13 MB)
-            bgVideoSrc = connectionQuality === 'low' ? 'assets/bg-scrub-optimized.mp4' : 'assets/bg-scrub-desktop.mp4';
-        }
-        
-        console.log(`📡 Calidad de red detectada: ${connectionQuality} | Cargando: ${bgVideoSrc}`);
-
-        // 3. Descargar a RAM
-        fetch(bgVideoSrc)
+        // 2. Descargar a RAM
+        fetch(initialBgVideoSrc)
             .then(response => response.blob())
             .then(blob => {
                 const videoBlobUrl = URL.createObjectURL(blob);
                 scrubVideo.src = videoBlobUrl;
+                
+                // 3. Mejora Progresiva para Móvil
+                // Una vez que todos los elementos se descarguen (evento load),
+                // bajamos el de alta calidad (Optimized) y lo reemplazamos sin que el usuario lo note.
+                if (isMobile) {
+                    window.addEventListener('load', () => {
+                        console.log('📡 Página cargada. Descargando video de alta calidad para móvil...');
+                        // Damos un pequeño margen para no competir con el primer renderizado
+                        setTimeout(() => {
+                            fetch('assets/bg-scrub-optimized.mp4')
+                                .then(res => res.blob())
+                                .then(highQualityBlob => {
+                                    console.log('📡 Video móvil HQ descargado. Intercambiando...');
+                                    const hqBlobUrl = URL.createObjectURL(highQualityBlob);
+                                    
+                                    // Guardar el estado de reproducción y tiempo actual
+                                    const currentTime = scrubVideo.currentTime;
+                                    const isPlaying = !scrubVideo.paused;
+                                    
+                                    // Intercambiar suavemente
+                                    scrubVideo.src = hqBlobUrl;
+                                    scrubVideo.currentTime = currentTime;
+                                    if (isPlaying) {
+                                        scrubVideo.play().catch(e => console.log("Error al reanudar HQ:", e));
+                                    }
+                                })
+                                .catch(error => console.error('Error descargando mejora de video:', error));
+                        }, 2000);
+                    });
+                }
             })
             .catch(error => {
                 console.error('Error precargando el video de fondo:', error);
                 // Fallback de seguridad por si falla el fetch
-                scrubVideo.src = bgVideoSrc;
+                scrubVideo.src = initialBgVideoSrc;
             });
     </script>
 
