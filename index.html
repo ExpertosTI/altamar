@@ -3,16 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Pescadería Altamar 🐟 | El Papa De Los Mariscos</title>
-    <meta name="description" content="Pescadería Altamar - El Papa De Los Mariscos 🤴🏻. Mariscos y pescados frescos. Envíos en tiempo real a Todo Santo Domingo. Ubicados en Calle Duarte esq La Vega, Los Alcarrizos, República Dominicana. Contáctanos al Ws 829-478-1652.">
-    <meta name="keywords" content="pescaderia, altamar, mariscos, pescados, envio todo santo domingo, los alcarrizos, el papa de los mariscos, pirata del caribe">
-    <meta property="og:title" content="Pescadería Altamar 🐟 | El Papa De Los Mariscos">
-    <meta property="og:description" content="Pescadería Altamar - El Papa De Los Mariscos 🤴🏻. Mariscos y pescados frescos. Envíos en tiempo real a Todo Santo Domingo.">
+    <title>Pescadería Altamar 🐟 | El Papa De Los Mariscos | Los Alcarrizos</title>
+    
+    <!-- Core SEO Meta Tags -->
+    <meta name="description" content="Pescadería Altamar - El Papa De Los Mariscos 🤴🏻. Mariscos y pescados frescos. Envíos en tiempo real a Todo Santo Domingo. Ubicados en Calle Duarte, Los Alcarrizos, República Dominicana. Delivery al Ws 829-478-1652.">
+    <meta name="keywords" content="pescaderia altamar, altamar online, pescaderia los alcarrizos, mariscos santo domingo, pescados frescos republica dominicana, el papa de los mariscos, pirata del caribe, mariscos a domicilio, comida de mar">
+    <meta name="author" content="Pescadería Altamar">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <link rel="canonical" href="https://altamar.renace.tech">
+
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://altamar.renace.tech">
+    <meta property="og:title" content="Pescadería Altamar | Mariscos y Pescados Frescos">
+    <meta property="og:description" content="El Papa De Los Mariscos. Mariscos y pescados frescos con envíos en tiempo real a Todo Santo Domingo. ¡Haz tu pedido ahora!">
+    <meta property="og:image" content="https://altamar.renace.tech/assets/AltamarLogo.png">
+    <meta property="og:site_name" content="Pescadería Altamar">
+
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://altamar.renace.tech">
+    <meta name="twitter:title" content="Pescadería Altamar | Mariscos y Pescados Frescos">
+    <meta name="twitter:description" content="El Papa De Los Mariscos. Envíos en tiempo real a Todo Santo Domingo. ¡Contáctanos!">
+    <meta name="twitter:image" content="https://altamar.renace.tech/assets/AltamarLogo.png">
+
+    <!-- Geo Tags for Local SEO -->
+    <meta name="geo.region" content="DO-01">
+    <meta name="geo.placename" content="Los Alcarrizos">
+    <meta name="geo.position" content="18.5288;-70.0272">
+    <meta name="ICBM" content="18.5288, -70.0272">
+
+    <!-- Schema.org Markup for LocalBusiness (SeafoodRestaurant) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SeafoodRestaurant",
+      "name": "Pescadería Altamar",
+      "image": "https://altamar.renace.tech/assets/AltamarLogo.png",
+      "@id": "https://altamar.renace.tech",
+      "url": "https://altamar.renace.tech",
+      "telephone": "+18294781652",
+      "priceRange": "$$",
+      "menu": "https://altamar.renace.tech",
+      "servesCuisine": "Seafood, Mariscos",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Calle Duarte esq La Vega",
+        "addressLocality": "Los Alcarrizos",
+        "addressRegion": "Santo Domingo",
+        "postalCode": "10805",
+        "addressCountry": "DO"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 18.5288,
+        "longitude": -70.0272
+      },
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opens": "08:00",
+        "closes": "20:00"
+      },
+      "sameAs": [
+        "https://www.instagram.com/pescaderia__altamar",
+        "https://www.facebook.com/pescaderia__altamar",
+        "https://altamaronline.com"
+      ],
+      "description": "El Papa De Los Mariscos 🤴🏻. Mariscos y pescados frescos. Envíos en tiempo real a Todo Santo Domingo.",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "reviewCount": "85"
+      }
+    }
+    </script>
+
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <!-- Security and Performance Meta Tags -->
+    <!-- Security, Performance and Cache Control Meta Tags -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta name="theme-color" content="#000c18">
     <link rel="icon" type="image/png" href="assets/AltamarLogo.png">
     
@@ -1660,6 +1739,25 @@
             customMenu.style.display = 'block';
         });
 
+        // Dos dedos presionados en móvil
+        window.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const menuWidth = 150;
+                const menuHeight = 50;
+                
+                let posX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                let posY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                
+                if (posX + menuWidth > window.innerWidth) posX = window.innerWidth - menuWidth - 10;
+                if (posY + menuHeight > window.innerHeight) posY = window.innerHeight - menuHeight - 10;
+                
+                customMenu.style.left = `${posX}px`;
+                customMenu.style.top = `${posY}px`;
+                customMenu.style.display = 'block';
+            }
+        });
+
         // Ocultar el menú si hace click o scroll en cualquier otro lado
         window.addEventListener('click', (e) => {
             if (e.target !== contextLoginBtn && !contextLoginBtn.contains(e.target)) {
@@ -1669,7 +1767,15 @@
         window.addEventListener('scroll', () => { customMenu.style.display = 'none'; }, {passive: true});
 
         // Abrir login al clickear ACCESO
-        contextLoginBtn.addEventListener('click', openModal);
+        contextLoginBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openModal();
+        });
+        contextLoginBtn.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            openModal();
+        });
 
         // Hover effect for context menu
         contextLoginBtn.addEventListener('mouseenter', () => {
