@@ -706,11 +706,12 @@
         const isMobile = window.innerWidth <= 768;
         
         // 1. Detectar la calidad de red del usuario (Sensación Premium vs Salvavidas)
+        // Priorizamos la MEJOR experiencia. Solo bajamos a 'low' en casos extremos.
         let connectionQuality = 'high'; // Por defecto asumimos buena conexión
         if (navigator.connection) {
             const conn = navigator.connection;
-            // Si el usuario tiene ahorro de datos, o está en 2G/3G, o su velocidad de bajada es muy lenta (< 2 Mbps)
-            if (conn.saveData || conn.effectiveType === '2g' || conn.effectiveType === '3g' || conn.downlink < 2.0) {
+            // Solo si tiene ahorro de datos, está en 2G, o su velocidad es críticamente baja (< 1 Mbps)
+            if (conn.saveData || conn.effectiveType === '2g' || conn.effectiveType === 'slow-2g' || (conn.downlink && conn.downlink < 1.0)) {
                 connectionQuality = 'low';
             }
         }
