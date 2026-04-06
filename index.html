@@ -169,18 +169,49 @@
             visibility: hidden;
         }
 
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(245, 158, 11, 0.2);
-            border-top-color: var(--accent-gold);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        .fish-loader {
+            position: relative;
+            width: 80px;
+            height: 80px;
             margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        @keyframes spin { 
-            100% { transform: rotate(360deg); } 
+        .jumping-fish {
+            width: 48px;
+            height: 48px;
+            color: var(--accent-gold);
+            animation: fishJump 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            z-index: 2;
+            transform-origin: center center;
+        }
+
+        .water-ripple {
+            position: absolute;
+            bottom: 10px;
+            width: 40px;
+            height: 12px;
+            background: rgba(13, 148, 136, 0.4);
+            border-radius: 50%;
+            animation: waterRipple 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            z-index: 1;
+        }
+
+        @keyframes fishJump {
+            0% { transform: translateY(15px) rotate(20deg); }
+            30% { transform: translateY(-20px) rotate(-15deg); }
+            60% { transform: translateY(15px) rotate(25deg); }
+            100% { transform: translateY(15px) rotate(20deg); }
+        }
+
+        @keyframes waterRipple {
+            0% { transform: scale(1); opacity: 0; }
+            5% { transform: scale(0.5); opacity: 1; }
+            20% { transform: scale(1.5); opacity: 0.5; }
+            40% { transform: scale(2.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 0; }
         }
 
         .loader-text {
@@ -760,7 +791,15 @@
 
     <!-- Modern Loader -->
     <div id="loader">
-        <div class="spinner"></div>
+        <div class="fish-loader">
+            <svg class="jumping-fish" xmlns="http://www.3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-.94 3.47-4.94 6-8.5 6-3.56 0-6.06-2.53-7-6Z"/>
+                <path d="M18 12v.01"/>
+                <path d="M2 14c1.5-1.5 3-2 5-2"/>
+                <path d="M2 10c1.5 1.5 3 2 5 2"/>
+            </svg>
+            <div class="water-ripple"></div>
+        </div>
         <div class="loader-text">Sincronizando Ofertas en Tiempo Real...</div>
     </div>
 
