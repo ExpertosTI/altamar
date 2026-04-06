@@ -704,7 +704,7 @@
         // Esto elimina por completo las peticiones repetidas (206 Partial Content) 
         // y garantiza que el scroll sea 100% fluido porque el video está en la RAM.
         const scrubVideo = document.getElementById('intro-scrub-video');
-        const bgVideoSrc = window.innerWidth <= 768 ? 'assets/bg-scrub-mobile.mp4' : 'assets/bg-scrub-desktop.mp4';
+        const bgVideoSrc = window.innerWidth <= 768 ? 'assets/bg-scrub-optimized.mp4' : 'assets/bg-scrub-desktop.mp4';
         
         fetch(bgVideoSrc)
             .then(response => response.blob())
