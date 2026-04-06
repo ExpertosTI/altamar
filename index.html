@@ -1423,8 +1423,28 @@
                     section.style.transform = `translateY(${translateY}px) scale(${Math.max(0.2, scale)})`;
                     section.style.pointerEvents = opacity > 0.5 ? 'auto' : 'none';
 
-                    // El Lazy Load de los videos ahora es manejado por un IntersectionObserver estricto
-                    // para evitar descargas accidentales en el primer renderizado.
+                    // Strict Lazy Loading based on true visibility in virtual scroll
+                    if (window.isBgLoadedForLazy && opacity > 0.1) {
+                        const lazyVideos = section.querySelectorAll('.lazy-video');
+                        lazyVideos.forEach(videoEl => {
+                            const src = videoEl.getAttribute('data-src');
+                            if (src && !videoEl.src) {
+                                videoEl.src = src;
+                                videoEl.load();
+                                videoEl.play().catch(()=>{});
+                            } else if (videoEl.src && videoEl.paused) {
+                                videoEl.play().catch(()=>{});
+                            }
+                        });
+                    } else {
+                        // Pause if mostly invisible
+                        const lazyVideos = section.querySelectorAll('.lazy-video');
+                        lazyVideos.forEach(videoEl => {
+                            if (videoEl.src && !videoEl.paused) {
+                                videoEl.pause();
+                            }
+                        });
+                    }
                 } else {
                     // Cuando ya llegó al centro o está por encima, se queda estática y 100% clara,
                     // permitiendo que fluya naturalmente con el scroll del usuario hacia arriba.
@@ -1432,6 +1452,20 @@
                     section.style.visibility = 'visible';
                     section.style.transform = `translateY(0px) scale(1)`;
                     section.style.pointerEvents = 'auto';
+
+                    if (window.isBgLoadedForLazy) {
+                        const lazyVideos = section.querySelectorAll('.lazy-video');
+                        lazyVideos.forEach(videoEl => {
+                            const src = videoEl.getAttribute('data-src');
+                            if (src && !videoEl.src) {
+                                videoEl.src = src;
+                                videoEl.load();
+                                videoEl.play().catch(()=>{});
+                            } else if (videoEl.src && videoEl.paused) {
+                                videoEl.play().catch(()=>{});
+                            }
+                        });
+                    }
                 }
             });
 
@@ -1636,48 +1670,15 @@
         const initLazyLoading = () => {
             const lazyVideos = document.querySelectorAll('.lazy-video');
             
-            // 1. Asignar los posters para que se descarguen las miniaturas
+            // 1. Asignar los posters para que se descarguen las miniaturas (siempre y cuando bgLoaded)
             lazyVideos.forEach(vid => {
                 const posterSrc = vid.getAttribute('data-poster');
                 if (posterSrc) {
                     vid.poster = posterSrc;
                 }
             });
-
-            // 2. Observar cuándo entran a la pantalla para cargar el MP4
-            // Nota: Como usamos scroll virtual y translateY, IntersectionObserver
-            // a veces falla si el elemento tiene "position: fixed".
-            // Pero nuestras sections no son fixed, se trasladan con translateY.
-            const videoObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const videoEl = entry.target;
-                        const src = videoEl.getAttribute('data-src');
-                        
-                        // Si el preloader ya cerró y entra en pantalla
-                        if (src && !videoEl.src) {
-                            videoEl.src = src;
-                            videoEl.load();
-                            videoEl.play().catch(e => console.log('Autoplay prevent:', e));
-                        } else if (videoEl.src) {
-                            videoEl.play().catch(()=>{});
-                        }
-                    } else {
-                        const videoEl = entry.target;
-                        if (videoEl.src && !videoEl.paused) {
-                            videoEl.pause();
-                        }
-                    }
-                });
-            }, {
-                rootMargin: '600px', // Cargar antes de que sea visible para que esté listo al llegar
-                threshold: 0.1
-            });
-
-            // Darle un pequeño retraso a la observación para priorizar las miniaturas
-            setTimeout(() => {
-                lazyVideos.forEach(vid => videoObserver.observe(vid));
-            }, 1000);
+            // 2. La carga del video MP4 se delega completamente a la función update() del Scroll
+            // donde medimos el 'opacity' exacto de cada section.
         };
 
         if (window.isBgLoadedForLazy) {
