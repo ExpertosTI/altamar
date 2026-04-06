@@ -710,8 +710,8 @@
         let connectionQuality = 'high'; // Por defecto asumimos buena conexión
         if (navigator.connection) {
             const conn = navigator.connection;
-            // Solo si tiene ahorro de datos, está en 2G, o su velocidad es críticamente baja (< 1 Mbps)
-            if (conn.saveData || conn.effectiveType === '2g' || conn.effectiveType === 'slow-2g' || (conn.downlink && conn.downlink < 1.0)) {
+            // Solo si es móvil y su velocidad es críticamente baja (< 1 Mbps)
+            if (isMobile && conn.downlink && conn.downlink < 1.0) {
                 connectionQuality = 'low';
             }
         }
