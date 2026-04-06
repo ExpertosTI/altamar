@@ -1192,9 +1192,9 @@
                 this.x = x;
                 this.y = y;
                 this.radius = 10;
-                this.maxRadius = window.innerWidth > 600 ? 800 : 400;
+                this.maxRadius = window.innerWidth > 600 ? 400 : 250; // Reducido para que no se expanda tanto
                 this.opacity = 1;
-                this.speed = 30; // Explodes outward fast
+                this.speed = 4; // Flujo lento y relajante en lugar de explosión
             }
             update() {
                 this.radius += this.speed;
@@ -1206,15 +1206,15 @@
                 ctx.save();
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.strokeStyle = `rgba(255, 255, 255, ${this.opacity * 0.5})`;
-                ctx.lineWidth = 10 * this.opacity;
+                ctx.strokeStyle = `rgba(255, 255, 255, ${this.opacity * 0.15})`; // Mucho más sutil
+                ctx.lineWidth = 3 * this.opacity; // Línea más fina
                 ctx.stroke();
 
-                // Inner shockwave
+                // Inner shockwave - removida o extremadamente suave
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius * 0.8, 0, Math.PI * 2);
-                ctx.strokeStyle = `rgba(255, 255, 255, ${this.opacity * 0.2})`;
-                ctx.lineWidth = 4 * this.opacity;
+                ctx.arc(this.x, this.y, this.radius * 0.85, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(255, 255, 255, ${this.opacity * 0.05})`;
+                ctx.lineWidth = 1 * this.opacity;
                 ctx.stroke();
                 ctx.restore();
             }
@@ -1302,17 +1302,17 @@
                 const dyMouse = pointerY - screenY;
                 const distMouse = Math.sqrt(dxMouse*dxMouse + dyMouse*dyMouse);
                 
-                if (pointerX !== -1000 && distMouse < 250) {
+                if (pointerX !== -1000 && distMouse < 300) {
                     // Fuerza exponencial basada en la cercanía
-                    const force = Math.pow((250 - distMouse) / 250, 2);
+                    const force = Math.pow((300 - distMouse) / 300, 2);
                     
-                    // Repulsión intensa (como si el dedo apartara el agua violentamente)
-                    this.vx -= (dxMouse / distMouse) * force * 35 * (1/scale);
-                    this.vy -= (dyMouse / distMouse) * force * 35 * (1/scale);
+                    // Repulsión suave (flujo fluido, no violento)
+                    this.vx -= (dxMouse / distMouse) * force * 5 * (1/scale);
+                    this.vy -= (dyMouse / distMouse) * force * 5 * (1/scale);
                     
-                    // Efecto vórtice/remolino brutal alrededor del dedo
-                    this.vx += (dyMouse / distMouse) * force * 20 * (1/scale);
-                    this.vy -= (dxMouse / distMouse) * force * 20 * (1/scale);
+                    // Efecto vórtice/remolino suave alrededor del dedo
+                    this.vx += (dyMouse / distMouse) * force * 8 * (1/scale);
+                    this.vy -= (dxMouse / distMouse) * force * 8 * (1/scale);
                 }
 
                 // Apply velocity and wobble controlled by scroll
@@ -1697,7 +1697,7 @@
         let lastRippleTime = 0;
         window.addEventListener('pointermove', (e) => {
             const now = Date.now();
-            if (now - lastRippleTime > 150) { // Limitador para no saturar
+            if (now - lastRippleTime > 350) { // Limitador relajado para parecer flujo natural, no saturado
                 ripples.push(new Ripple(e.clientX, e.clientY));
                 lastRippleTime = now;
             }
