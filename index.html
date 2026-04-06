@@ -705,13 +705,24 @@
         const scrubVideo = document.getElementById('intro-scrub-video');
         const isMobile = window.innerWidth <= 768;
         
-        // 1. Detectar la calidad de red del usuario (Sensación Premium vs Salvavidas)
-        // Priorizamos la MEJOR experiencia. Solo bajamos a 'low' en casos extremos.
+        // 1. Detectar la calidad de red y dispositivo del usuario (Sensación Premium)
+        // Priorizamos la MEJOR experiencia. iPhones y gama alta nunca ven el de baja calidad.
         let connectionQuality = 'high'; // Por defecto asumimos buena conexión
-        if (navigator.connection) {
-            const conn = navigator.connection;
-            // Solo si es móvil y su velocidad es críticamente baja (< 1 Mbps)
-            if (isMobile && conn.downlink && conn.downlink < 1.0) {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        
+        // Solo aplicamos degradación si es móvil y NO es un dispositivo iOS (Apple)
+        if (isMobile && !isIOS) {
+            // Detectar si es un Android de gama baja (<= 4GB RAM o <= 4 núcleos)
+            const isLowEndHardware = (navigator.deviceMemory && navigator.deviceMemory <= 4) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
+            
+            if (navigator.connection) {
+                const conn = navigator.connection;
+                // Bajar calidad solo si la red es muy inestable (< 1 Mbps) o el teléfono es gama baja
+                if (conn.downlink < 1.0 || isLowEndHardware) {
+                    connectionQuality = 'low';
+                }
+            } else if (isLowEndHardware) {
+                // Fallback si no hay API de red pero sabemos que el hardware es limitado
                 connectionQuality = 'low';
             }
         }
